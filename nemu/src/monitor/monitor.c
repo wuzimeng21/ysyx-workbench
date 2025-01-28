@@ -33,7 +33,7 @@ static void welcome() {
   printf("Welcome to %s-NEMU!\n", ANSI_FMT(str(__GUEST_ISA__), ANSI_FG_YELLOW ANSI_BG_RED));
   printf("For help, type \"help\"\n");
  // Log("Exercise: Please remove me in the source code and compile NEMU again.");
-  assert(0);
+//  assert(0);
 }
 
 #ifndef CONFIG_TARGET_AM
@@ -43,7 +43,10 @@ void sdb_set_batch_mode();
 
 static char *log_file = NULL;
 static char *diff_so_file = NULL;
+//static char *img_file = NULL;
 static char *img_file = NULL;
+//"/home/wzm/Desktop/ysyx-workbench/nemu/src/monitor/pic.txt";
+//e71542af05173ad5f3c2a86a3d5b1a50_1.jpg";
 static int difftest_port = 1234;
 
 static long load_img() {
