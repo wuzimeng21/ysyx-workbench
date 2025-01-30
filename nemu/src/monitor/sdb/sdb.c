@@ -18,6 +18,9 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/paddr.h>
+#include <memory/vaddr.h>
+#include <../../../include/debug.h>
 
 static int is_batch_mode = false;
 
@@ -53,6 +56,56 @@ static int cmd_q(char *args) {
   return -1;
 }
 
+static int cmd_si(char *args){
+	int step = 1;
+	if(args == NULL){
+		;
+	}
+	else {
+		// read the value of the N (si [N])
+		sscanf(args, "%d", &step);
+	}
+	// move N steps
+  printf("cmd_si N is %d\n", step);
+	 cpu_exec(step);
+	 return 0;
+}
+
+static int cmd_info(char *args){
+	// print regs or watchpoints
+	if(!strcmp(args, "r")) {
+	  isa_reg_display();
+	}
+	else 
+	{
+		;
+	}
+	return 0;
+}
+
+static int cmd_x(char *args) {
+	char *N = strtok(args, " ");
+	char * expr_16 = strtok(NULL, " ");
+	// use Assert()???
+	Assert(N != NULL && expr_16 != NULL, "less args: N->%s, EXPR->%s\n", N, expr_16);
+	//assert(N != NULL && expr_16 != NULL);
+	int l = 0;
+	vaddr_t addr;
+	sscanf(N, "%d", &l);
+	sscanf(expr_16, "%x", &addr);
+	//int expr_10 = strtol(expr_16, NULL, 16);
+	printf("cmd_x N is %s, expr is %s\n", N, expr_16);
+	printf("cmd_x l is %d, addr is %x or %d\n", l, addr, addr);
+	for(int i = 0; i < l ; i ++) 
+	{
+    printf("cmd_x addr: %x\t", addr);
+		word_t tmp = vaddr_read(addr, 4);
+		addr += 4;
+		printf("cmd_x read result: %x\n", tmp);
+	}	
+	return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -60,13 +113,21 @@ static struct {
   const char *description;
   int (*handler) (char *);
 } cmd_table [] = {
-  { "help", "Display information about all supported commands", cmd_help },
-  { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
+  { "help", "help:  Display information about all supported commands", cmd_help },
+  { "c", "c: Continue the execution of the program", cmd_c },
+  { "q", "q: Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+  {"si", "si [N]: Let the program execute N instructions step by step and then pause execution. If N is not provided, the default value is 1", cmd_si},
+  {"info", "info SUNCMD(r || w): To print the register status and watchpoint information", cmd_info},
+  {"x", "x N EXPR: To evaluate the expression EXPR, use the result as the starting memory address, and output N consecutive 4-byte values in hexadecimal format", cmd_x},
+ // {"test_p", "test_p: Test the function which is used to calulate the expression", cmd_test},
+ // {"p", "p EXPR: Calulate the expression EXPR", cmd_p},
+ // {"w", "w EXPR: When the value of the expression `EXPR` changes, pause the program execution", cmd_w},
+ // {"d", "d N: Delete the watchpoint with index N", cmd_d},
 
 };
+
 
 #define NR_CMD ARRLEN(cmd_table)
 

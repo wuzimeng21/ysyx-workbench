@@ -24,6 +24,14 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+  int sz = sizeof(regs) / sizeof(regs[0]);
+  for(int i = 0; i < sz; i ++) {
+    int idx = check_reg_idx(i);
+    if( idx >= 0 && idx < MUXDEF(CONFIG_RVE, 16, 32)){
+      // word_t va = isa_reg_str2val(regs[idx], );
+      printf("  reg name: %s   reg value: %d\n", regs[idx], cpu.gpr[idx]);
+    }
+  }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
