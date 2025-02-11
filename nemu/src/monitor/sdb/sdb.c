@@ -20,6 +20,7 @@
 #include "sdb.h"
 #include <memory/paddr.h>
 #include <memory/vaddr.h>
+#include <memory/host.h>
 #include <../../../include/debug.h>
 
 static int is_batch_mode = false;
@@ -106,6 +107,35 @@ static int cmd_x(char *args) {
 	return 0;
 }
 
+
+static int cmd_test()
+{
+    printf("\n-----ENTER CMD_TEST----\n");
+    test_expr();
+    printf("\n-----FINISH----\n");
+    return 0;
+}
+
+static int cmd_p(char *args)
+{
+    bool su = true;
+    /// char *e;
+    // char *c1 = strtok(args, " ");
+    word_t res_expr = expr(args, &su);
+
+    if (su == false)
+    {
+        printf("expr err..\n");
+    }
+    else
+    {
+        printf("expr ans is %d.\n", res_expr);
+    }
+
+    return 0;
+}
+
+
 static int cmd_help(char *args);
 
 static struct {
@@ -121,8 +151,8 @@ static struct {
   {"si", "si [N]: Let the program execute N instructions step by step and then pause execution. If N is not provided, the default value is 1", cmd_si},
   {"info", "info SUNCMD(r || w): To print the register status and watchpoint information", cmd_info},
   {"x", "x N EXPR: To evaluate the expression EXPR, use the result as the starting memory address, and output N consecutive 4-byte values in hexadecimal format", cmd_x},
- // {"test_p", "test_p: Test the function which is used to calulate the expression", cmd_test},
- // {"p", "p EXPR: Calulate the expression EXPR", cmd_p},
+  {"test", "test: Test the function which is used to calulate the expression", cmd_test},
+  {"p", "p EXPR: Calulate the expression EXPR", cmd_p},
  // {"w", "w EXPR: When the value of the expression `EXPR` changes, pause the program execution", cmd_w},
  // {"d", "d N: Delete the watchpoint with index N", cmd_d},
 

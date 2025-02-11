@@ -21,18 +21,68 @@
 #include <string.h>
 
 // this should be enough
-static char buf[65536] = {};
-static char code_buf[65536 + 128] = {}; // a little larger than `buf`
+static int buf_idx = 0;
+static char buf[65530] = {};
+static char code_buf[65530 + 128] = {}; // a little larger than `buf`
 static char *code_format =
 "#include <stdio.h>\n"
 "int main() { "
 "  unsigned result = %s; "
 "  printf(\"%%u\", result); "
 "  return 0; "
-"}";
+"} ";
+
+static int choose(int num) {
+  // 0 ~ num - 1
+  int idx = rand() % num;
+  // printf("random test: choose number is: %d\n", idx);
+  return idx;
+}
+
+static void gen(char c) {
+  assert(buf_idx < 65530);  // buf overflow
+  buf[buf_idx ++] = c;
+  return ;
+}
+
+static void gen_num() {
+  assert(buf_idx < 65530);  // buf overflow
+  int max_num = 50; // maximum number
+  int num = rand() % (max_num + 1) + 1;
+  int len = 0;
+  int num_tmp = num;
+  while(num_tmp) {
+    len ++;
+    num_tmp /= 10;
+  }
+  int tmp = 1;
+  for(int i = 1; i < len; i ++) {
+    tmp *= 10;
+  }
+  while(num) {
+    buf[buf_idx ++] = (num / tmp) + '0';
+    num = num % tmp;
+    tmp /= 10;
+  }
+  return ;
+}
+
+static void gen_rand_op() {
+  assert(buf_idx < 65530);  // buf overflow
+  char ops[4] = {'+', '-', '*', '/',}; //'!=', '<=', '>=', '<', '>', '&&', '||'};
+  int idx = rand() % 4;
+  buf[buf_idx ++] = ops[idx];
+  return ;
+}
 
 static void gen_rand_expr() {
-  buf[0] = '\0';
+  // printf("idx %d\n", buf_idx);
+  assert(buf_idx < 65530);  // buf overflow
+  switch (choose(3)) {
+    case 0: gen_num(); break;
+    case 1: gen('('); gen_rand_expr(); gen(')'); break;
+    default: gen_rand_expr(); gen_rand_op(); gen_rand_expr(); break;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -44,7 +94,9 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
+    buf_idx = 0; // reset
     gen_rand_expr();
+    buf[buf_idx] = '\0';
 
     sprintf(code_buf, code_format, buf);
 
@@ -57,11 +109,13 @@ int main(int argc, char *argv[]) {
     if (ret != 0) continue;
 
     fp = popen("/tmp/.expr", "r");
+    // fp = fopen("/tmp/.expr", "r");
     assert(fp != NULL);
 
     int result;
     ret = fscanf(fp, "%d", &result);
     pclose(fp);
+    // fclose(fp);
 
     printf("%u %s\n", result, buf);
   }

@@ -19,5 +19,13 @@
 #include <common.h>
 
 word_t expr(char *e, bool *success);
+void test_expr();
+void watchpoint_info();
+void watchpoint_w(char * expr, int num_from_sdb);
+void watchpoint_d(int num_wp);
+bool compare_v(int v_idx);
+int check_use(int idx_wp);
+bool check_all_wp();
+#define NR_WP 32
 
 #endif
