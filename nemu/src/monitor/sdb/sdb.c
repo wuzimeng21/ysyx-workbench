@@ -84,29 +84,45 @@ static int cmd_info(char *args){
 	return 0;
 }
 
-static int cmd_x(char *args) {
-	char *N = strtok(args, " ");
-	char * expr_16 = strtok(NULL, " ");
-	// use Assert()???
-	Assert(N != NULL && expr_16 != NULL, "less args: N->%s, EXPR->%s\n", N, expr_16);
-	//assert(N != NULL && expr_16 != NULL);
-	int l = 0;
-	vaddr_t addr;
-	sscanf(N, "%d", &l);
-	sscanf(expr_16, "%x", &addr);
-	//int expr_10 = strtol(expr_16, NULL, 16);
-	printf("cmd_x N is %s, expr is %s\n", N, expr_16);
-	printf("cmd_x l is %d, addr is %x or %d\n", l, addr, addr);
-	for(int i = 0; i < l ; i ++) 
-	{
-    printf("cmd_x addr: %x\t", addr);
-		word_t tmp = vaddr_read(addr, 4);
-		addr += 4;
-		printf("cmd_x read result: %x\n", tmp);
-	}	
-	return 0;
-}
-
+// static int cmd_x(char *args) {
+// 	char *N = strtok(args, " ");
+// 	char * expr_16 = strtok(NULL, " ");
+// 	// use Assert()???
+// 	Assert(N != NULL && expr_16 != NULL, "less args: N->%s, EXPR->%s\n", N, expr_16);
+// 	//assert(N != NULL && expr_16 != NULL);
+// 	int l = 0;
+// 	vaddr_t addr;
+// 	sscanf(N, "%d", &l);
+// 	sscanf(expr_16, "%x", &addr);
+// 	//int expr_10 = strtol(expr_16, NULL, 16);
+// 	printf("cmd_x N is %s, expr is %s\n", N, expr_16);
+// 	printf("cmd_x l is %d, addr is %x or %d\n", l, addr, addr);
+// 	for(int i = 0; i < l ; i ++) 
+// 	{
+//     printf("cmd_x addr: %x\t", addr);
+// 		word_t tmp = vaddr_read(addr, 4);
+// 		addr += 4;
+// 		printf("cmd_x read result: %x\n", tmp);
+// 	}	
+// 	return 0;
+// }
+static int cmd_x(char *args)
+{
+    int l = 0;
+    int i = 0;
+    paddr_t addr;
+    char *c1 = strtok(args, " ");
+    char *c2 = strtok(NULL, " ");
+    sscanf(c1, "%d", &l);
+    sscanf(c2, "%x", &addr);
+    for (i = 0; i < l; i++)
+    {
+        // risv32
+        word_t tmp = paddr_read(addr, 1);
+        printf("%d", tmp);
+    }
+    return 0;
+} ////risv 32
 
 static int cmd_test()
 {
@@ -135,6 +151,28 @@ static int cmd_p(char *args)
     return 0;
 }
 
+static int cmd_w(char *args)
+{
+    assert(args != NULL);
+    bool su_tmp = true;
+    word_t num_to_wp = expr(args, &su_tmp);
+    assert(su_tmp != false);
+    watchpoint_w(args, num_to_wp);
+    //watchpoint_info();
+    return 0;
+}
+
+static int cmd_d(char *args)
+{
+    int num_wp = -1;
+    sscanf(args, "%d", &num_wp);
+    assert(num_wp >= 0);
+
+    watchpoint_d(num_wp);
+    return 0;
+}
+
+
 
 static int cmd_help(char *args);
 
@@ -153,8 +191,8 @@ static struct {
   {"x", "x N EXPR: To evaluate the expression EXPR, use the result as the starting memory address, and output N consecutive 4-byte values in hexadecimal format", cmd_x},
   {"test", "test: Test the function which is used to calulate the expression", cmd_test},
   {"p", "p EXPR: Calulate the expression EXPR", cmd_p},
- // {"w", "w EXPR: When the value of the expression `EXPR` changes, pause the program execution", cmd_w},
- // {"d", "d N: Delete the watchpoint with index N", cmd_d},
+  {"w", "w EXPR: When the value of the expression `EXPR` changes, pause the program execution", cmd_w},
+  {"d", "d N: Delete the watchpoint with index N", cmd_d},
 
 };
 
