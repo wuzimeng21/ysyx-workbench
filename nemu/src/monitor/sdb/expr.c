@@ -688,35 +688,42 @@ word_t expr(char *e, bool *success)
     // rules: (* HEX) || (* REG) || (* TK_NUM) if i != 0  // need use ()
     // 		else:
     // 			i == 0 && (* HEX || *REG || * TK_NUM)  /// no () is OK
-    // for (int i = 0; i < nr_token; i++)
-    // {
-    //     printf("see see: %d %s\n", tokens[i].type, tokens[i].str);
-    // }
+    // 2025.02.12 deal with * pointer
 
    for (int i = 0; i < nr_token; i++)
     {
-        if (tokens[i].type == MUL && (i == 0 || tokens[i - 1].type == ZUOK))
+        if (tokens[i].type == MUL && (i == 0 || 
+        (tokens[i - 1].type == ZUOK ||tokens[i - 1].type == ADD ||tokens[i - 1].type == SUB ||
+         tokens[i - 1].type == MUL ||tokens[i - 1].type == DIV ||tokens[i - 1].type == LEQ ||
+         tokens[i - 1].type == GEQ ||tokens[i - 1].type == LESS ||tokens[i - 1].type == GET ||
+         tokens[i - 1].type == TK_EQ ||tokens[i - 1].type == TK_NOT_EQ ||tokens[i - 1].type == AND ||
+         tokens[i - 1].type == OR )))
         {
             tokens[i].type = DEREF;
             assert(tokens[i + 1].type == TK_NUM);
             // calculate (* xxx )
-            int tmp_jie1 = atoi(tokens[i + 1].str);
-	    printf("tmp_jie1: %d\n", tmp_jie1);
-	   //int *ptr = &tmp_jie1;
-	   intptr_t ptr_value = (intptr_t)tmp_jie1;
-	   printf("OK..Now we have ptr_value...But maybe we can not get value from it..\n");
-	   int * ptr = (int *)ptr_value;
-	   int res_jie = *ptr;
-	   printf("The value we get from the pointer: %d\n", res_jie);
+            // int tmp_jie1 = atoi(tokens[i + 1].str);
+            // printf("tmp_jie1: %d\n", tmp_jie1);
+            // // int *ptr = &tmp_jie1;
+            // // intptr_t ptr_value = (intptr_t)tmp_jie1;
+            // printf("OK..Now we have ptr_value...But maybe we can not get value from it..\n");
+            // // int * ptr = (int *)ptr_value;
+            // printf("here...\n");
+            // int res_jie = tmp_jie1;
+            // // int res_jie = &ptr_value;
+            // rewrite 2025.2.11
+            int res_jie = eval(i + 1, i + 1);
+            printf("The value we get from the pointer: %d\n", res_jie);
 
-	   if (res_jie >= 0)
-	      num_to_str(res_jie, tokens[i].str, 1);
-	   else
-	      num_to_str(-res_jie, tokens[i].str, 0);
-	   tokens[i].type = TK_NUM;
-	   printf("The value we get from the pointer is already in the tokens.\n");
-	   // strcpy(tokens[i].str, str_tmp_jie);
-           
+            if (res_jie >= 0)
+                num_to_str(res_jie, tokens[i].str, 1);
+            else
+                num_to_str(-res_jie, tokens[i].str, 0);
+            
+            // deal with tokens
+            tokens[i].type = TK_NUM;
+            printf("The value we get from the pointer is already in the tokens.\n");
+            // strcpy(tokens[i].str, str_tmp_jie);
             if (i == 0)
             {		
                 // HEX || TK_NUM || REG
@@ -725,22 +732,24 @@ word_t expr(char *e, bool *success)
 
                 nr_token -= (1);
             }
-            else if (tokens[i - 1].type == ZUOK)
+            else if ((tokens[i - 1].type == ZUOK ||tokens[i - 1].type == ADD ||tokens[i - 1].type == SUB ||
+                      tokens[i - 1].type == MUL ||tokens[i - 1].type == DIV ||tokens[i - 1].type == LEQ ||
+                      tokens[i - 1].type == GEQ ||tokens[i - 1].type == LESS ||tokens[i - 1].type == GET ||
+                      tokens[i - 1].type == TK_EQ ||tokens[i - 1].type == TK_NOT_EQ ||tokens[i - 1].type == AND ||
+                      tokens[i - 1].type == OR ))
             {
-                // '('
-                tokens[i - 1].type = TK_NOTYPE;
-                strcpy(tokens[i - 1].str, clr);
-
+                // // '('
+                // tokens[i - 1].type = TK_NOTYPE;
+                // strcpy(tokens[i - 1].str, clr);
                 // HEX || TK_NUM || REG
                 tokens[i + 1].type = TK_NOTYPE;
                 strcpy(tokens[i + 1].str, clr);
-
-                // ')'
-                tokens[i + 2].type = TK_NOTYPE;
-                strcpy(tokens[i + 2].str, clr);
-                nr_token -= (3);
+                // // ')'
+                // tokens[i + 2].type = TK_NOTYPE;
+                // strcpy(tokens[i + 2].str, clr);
+                // nr_token -= (3);
             }
-        }
+      }
     }
 
     uint32_t ans = 0;

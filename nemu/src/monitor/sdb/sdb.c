@@ -79,50 +79,33 @@ static int cmd_info(char *args){
 	}
 	else 
 	{
-		;
+		watchpoint_info();
 	}
 	return 0;
 }
 
-// static int cmd_x(char *args) {
-// 	char *N = strtok(args, " ");
-// 	char * expr_16 = strtok(NULL, " ");
-// 	// use Assert()???
-// 	Assert(N != NULL && expr_16 != NULL, "less args: N->%s, EXPR->%s\n", N, expr_16);
-// 	//assert(N != NULL && expr_16 != NULL);
-// 	int l = 0;
-// 	vaddr_t addr;
-// 	sscanf(N, "%d", &l);
-// 	sscanf(expr_16, "%x", &addr);
-// 	//int expr_10 = strtol(expr_16, NULL, 16);
-// 	printf("cmd_x N is %s, expr is %s\n", N, expr_16);
-// 	printf("cmd_x l is %d, addr is %x or %d\n", l, addr, addr);
-// 	for(int i = 0; i < l ; i ++) 
-// 	{
-//     printf("cmd_x addr: %x\t", addr);
-// 		word_t tmp = vaddr_read(addr, 4);
-// 		addr += 4;
-// 		printf("cmd_x read result: %x\n", tmp);
-// 	}	
-// 	return 0;
-// }
-static int cmd_x(char *args)
-{
-    int l = 0;
-    int i = 0;
-    paddr_t addr;
-    char *c1 = strtok(args, " ");
-    char *c2 = strtok(NULL, " ");
-    sscanf(c1, "%d", &l);
-    sscanf(c2, "%x", &addr);
-    for (i = 0; i < l; i++)
-    {
-        // risv32
-        word_t tmp = paddr_read(addr, 1);
-        printf("%d", tmp);
-    }
-    return 0;
-} ////risv 32
+static int cmd_x(char *args) {
+	char *N = strtok(args, " ");
+	char * expr_16 = strtok(NULL, " ");
+	// use Assert()???
+	Assert(N != NULL && expr_16 != NULL, "less args: N->%s, EXPR->%s\n", N, expr_16);
+	//assert(N != NULL && expr_16 != NULL);
+	int l = 0;
+	vaddr_t addr;
+	sscanf(N, "%d", &l);
+	sscanf(expr_16, "%x", &addr);
+	//int expr_10 = strtol(expr_16, NULL, 16);
+	printf("cmd_x N is %s, expr is %s\n", N, expr_16);
+	printf("cmd_x l is %d, addr is %x or %d\n", l, addr, addr);
+	for(int i = 0; i < l ; i ++) 
+	{
+    printf("cmd_x addr: %x\t", addr);
+		word_t tmp = vaddr_read(addr, 4);
+		addr += 4;
+		printf("cmd_x read result: %x\n", tmp);
+	}	
+	return 0;
+}
 
 static int cmd_test()
 {
@@ -158,7 +141,7 @@ static int cmd_w(char *args)
     word_t num_to_wp = expr(args, &su_tmp);
     assert(su_tmp != false);
     watchpoint_w(args, num_to_wp);
-    //watchpoint_info();
+    watchpoint_info();
     return 0;
 }
 

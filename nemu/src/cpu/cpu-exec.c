@@ -17,6 +17,8 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
+#include "../monitor/sdb/sdb.h"
+// #include <utils.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -38,6 +40,14 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
+  // if the value of watchpoint is changed ,we should change nemu_state.state -> NEMU_STOP
+  #ifdef CONFIG_WATCHPOINT
+    bool flag_trace_and_difftest = check_all_wp();
+    if(!flag_trace_and_difftest) {
+      nemu_state.state = NEMU_STOP;
+      return ;
+    }
+  #endif
 }
 
 static void exec_once(Decode *s, vaddr_t pc) {

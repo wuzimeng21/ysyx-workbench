@@ -28,8 +28,8 @@ typedef struct watchpoint
     //char * e;
     char E[100];
     // char * e2;
-    int v;
-    //int v2;
+    int old_v;
+    int new_v;
 
 } WP;
 
@@ -47,12 +47,14 @@ void watchpoint_d(int num_wp);
 bool compare_v(int v_idx);
 int check_use(int idx_wp);
 
+
+
 bool compare_v(int v_idx){
 	bool su = false;
-	if(wp_pool[v_idx].v != expr(wp_pool[v_idx].E, &su)) {
+	if(wp_pool[v_idx].old_v != expr(wp_pool[v_idx].E, &su)) {
 		assert(su == true);
-		wp_pool[v_idx].v = expr(wp_pool[v_idx].E, &su);
-		assert(su == true);
+		// wp_pool[v_idx].old_v = expr(wp_pool[v_idx].E, &su);
+		// assert(su == true);
 		return false;
 	}
 	return true;
@@ -66,17 +68,16 @@ bool check_all_wp(){
 for(int i = 0; i < NR_WP; i ++){
   	if(check_use(i) == 1){
   		if(compare_v(i) == false){
-  			return true;
+			printf("NO %d watchpoint old value and new value is not equal... the expression of the watchpoint is %s\n", wp_pool[i].NO, wp_pool[i].E);
+  			return false;
   		}
   		else {
-  			;
-  			//printf("v1 equal to v2\n");
-  			//return false;
+			printf("NO %d watchpoint old value and new value is equal...\n ", wp_pool[i].NO);
   		}
   	}
   }
   
-  return false;
+  return true;
 }
 
 
@@ -99,7 +100,7 @@ void watchpoint_info(){
 	}
 	else{
 		while(tmp != NULL){
-			printf("NO: %d\texprssion: %s\tvalue: %d\n", tmp->NO, tmp->E, tmp->v);
+			printf("NO: %d\texprssion: %s\told value: %d\tnew value: %d\n", tmp->NO, tmp->E, tmp->old_v, tmp->new_v);
 			tmp = tmp->next;
 			}
 	}
@@ -121,7 +122,7 @@ WP *new_wp(char *e, int v)
     WP *tmp = NULL;
     tmp = free_;
     free_ = free_->next;
-    tmp->v = v;    
+    tmp->old_v = v;    
     //tmp->e = e;
     strcpy(tmp->E, e);
     tmp->use = 1;
@@ -152,7 +153,7 @@ void free_wp(WP *wp)
     else if(tmp->NO == wp->NO){
     	tmp->use = 0;
     	strcpy(tmp->E, " ");
-    	tmp->v = 0;
+    	tmp->old_v = 0;
     	head = head->next;
     	flag = true;
     }
@@ -163,7 +164,7 @@ void free_wp(WP *wp)
 	    		pre->next = tmp->next;
 	    		tmp->use = 0;
 	    		strcpy(tmp->E, "  ");
-	    		tmp->v = 0;
+	    		tmp->old_v = 0;
 	    		flag = true;
 	    		break;
     			
