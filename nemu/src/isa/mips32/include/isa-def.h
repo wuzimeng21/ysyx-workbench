@@ -19,8 +19,8 @@
 #include <common.h>
 
 typedef struct {
-  word_t gpr[32];
-  word_t pad[5];
+  word_t gpr[32]; // regs
+  word_t pad[5]; // Padding, possibly for alignment or reserved for future extensions.
   vaddr_t pc;
 } mips32_CPU_state;
 
