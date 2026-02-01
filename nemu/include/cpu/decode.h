@@ -27,10 +27,16 @@ typedef struct Decode {
 } Decode;
 
 // --- pattern matching mechanism ---
+// The pattern_decode() function extracts the 0s and 1s
+//  from the pattern string into the integer variable key.
+// mask represents the bitmask for key,
+// and shift indicates the number of bits 
+// between the opcode and the least significant bit (LSB),
+// which helps the compiler perform optimizations.
 __attribute__((always_inline))
 static inline void pattern_decode(const char *str, int len,
     uint64_t *key, uint64_t *mask, uint64_t *shift) {
-  uint64_t __key = 0, __mask = 0, __shift = 0;
+  uint64_t __key = 0, __mask = 0, __shift = 0; 
 #define macro(i) \
   if ((i) >= len) goto finish; \
   else { \
