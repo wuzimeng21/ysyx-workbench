@@ -83,12 +83,13 @@ static int parse_args(int argc, char *argv[]) {
   int o;
   while ( (o = getopt_long(argc, argv, "-bhl:d:p:", table, NULL)) != -1) {
     switch (o) {
-      case 'b': sdb_set_batch_mode(); break;
-      case 'p': sscanf(optarg, "%d", &difftest_port); break;
-      case 'l': log_file = optarg; break;
-      case 'd': diff_so_file = optarg; break;
-      case 1: img_file = optarg; return 0;
+      case 'b': printf("\nchoose batch mode\n\n");sdb_set_batch_mode(); break;
+      case 'p': printf("\nchoose port mode\n\n");sscanf(optarg, "%d", &difftest_port); break;
+      case 'l': printf("\nchoose log mode\n\n");log_file = optarg; break;
+      case 'd': printf("\nchoose diff mode\n\n");diff_so_file = optarg; break;
+      case 1: printf("\nchoose image mode...\n\n");img_file = optarg; return 0;
       default:
+        printf("\nchoose help mode\n\n");
         printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
         printf("\t-b,--batch              run with batch mode\n");
         printf("\t-l,--log=FILE           output log to FILE\n");
@@ -103,7 +104,11 @@ static int parse_args(int argc, char *argv[]) {
 
 void init_monitor(int argc, char *argv[]) {
   /* Perform some global initialization. */
-
+  printf("\nenter init_monitor\n\n");
+  printf("argc: %d\n", argc);
+  for (int i = 0; i < argc; i++) {
+    printf("argv[%d]: %s\n", i, argv[i]);
+  }
   /* Parse arguments. */
   parse_args(argc, argv);
 

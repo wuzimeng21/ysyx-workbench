@@ -29,7 +29,14 @@ override ARGS += $(ARGS_DIFF)
 
 # Command to execute NEMU
 IMG ?=
-NEMU_EXEC := $(BINARY) $(ARGS) $(IMG)
+NEMU_EXEC := $(BINARY) $(ARGS) -b $(IMG)
+# TODO PA2 2026.2.1: Change nemu to batch mode 
+
+$(info ARGS = $(ARGS))
+$(info IMG = $(IMG))
+$(info NEMU_EXEC = $(NEMU_EXEC))
+$(info BINARY = $(BINARY))
+$(info DIFF_REF_SO = $(DIFF_REF_SO))
 
 run-env: $(BINARY) $(DIFF_REF_SO)
 
