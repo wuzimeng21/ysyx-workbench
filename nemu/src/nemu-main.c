@@ -39,39 +39,40 @@ int main(int argc, char *argv[]) {
 
   /* Start engine. */
   engine_start();
-  FILE *fp = fopen("/home/wzm/Desktop/ysyx-workbench/nemu/tools/gen-expr/build/input", "r");
-  assert(fp != NULL);
-  char line[65530 + 128];
-  int success = 0, failure = 0;
-  while (fgets(line, sizeof(line), fp)) {
-      unsigned int answer;
-      char expression[128];
-      unsigned int answer_calculate;
-      bool su = false;
-      if (sscanf(line, "%u %[^\n]", &answer, expression) == 2) {
-        answer_calculate = expr(expression, &su); // word_t
-        printf("(nemu_main) random test: expression: %s\n", expression);
-        if(answer_calculate == INT_MAX) {
-          ;
-        }
-        else {
-          printf("answer: %u\n", answer);
-          printf("answer_calculate: %u\n", answer_calculate);
-          if(answer == answer_calculate) success++;
-          else {
-            failure ++;
-            assert(0);
-          }
-          printf("----------------------\n");
-        }
+  // 2026.2.4 PA2: forbiding disturn the test of am-kernels/tests/cpu-tests/tests in batch mode
+  // FILE *fp = fopen("/home/wzm/Desktop/ysyx-workbench/nemu/tools/gen-expr/build/input", "r");
+  // assert(fp != NULL);
+  // char line[65530 + 128];
+  // int success = 0, failure = 0;
+  // while (fgets(line, sizeof(line), fp)) {
+  //     unsigned int answer;
+  //     char expression[128];
+  //     unsigned int answer_calculate;
+  //     bool su = false;
+  //     if (sscanf(line, "%u %[^\n]", &answer, expression) == 2) {
+  //       answer_calculate = expr(expression, &su); // word_t
+  //       printf("(nemu_main) random test: expression: %s\n", expression);
+  //       if(answer_calculate == INT_MAX) {
+  //         ;
+  //       }
+  //       else {
+  //         printf("answer: %u\n", answer);
+  //         printf("answer_calculate: %u\n", answer_calculate);
+  //         if(answer == answer_calculate) success++;
+  //         else {
+  //           failure ++;
+  //           assert(0);
+  //         }
+  //         printf("----------------------\n");
+  //       }
 
-      } else {
-          fprintf(stderr, "Read fail: %s", line);
-      }
-  }
+  //     } else {
+  //         fprintf(stderr, "Read fail: %s", line);
+  //     }
+  // }
 
-  fclose(fp);
-  printf("success number: %d failure number: %d\n", success, failure);
+  // fclose(fp);
+  // printf("success number: %d failure number: %d\n", success, failure);
 
   return is_exit_status_bad();
 }

@@ -28,21 +28,16 @@ size_t strlen(const char *s) {
 char *strcpy(char *dst, const char *src) {
   // NAME
   //        strcpy, strncpy - copy a string
-
   // SYNOPSIS
   //        #include <string.h>
-
   //        char *strcpy(char *dest, const char *src);
-
   //        char *strncpy(char *dest, const char *src, size_t n);
-
   // DESCRIPTION
   //        The  strcpy()  function  copies the string pointed to by src, including
   //        the terminating null byte ('\0'), to the buffer  pointed  to  by  dest.
   //        The  strings  may  not overlap, and the destination string dest must be
   //        large enough to receive the copy.  Beware  of  buffer  overruns!   (See
   //        BUGS.)
-
   //        The  strncpy()  function is similar, except that at most n bytes of src
   //        are copied.  Warning: If there is no null byte among the first n  bytes
   //        of src, the string placed in dest will not be null-terminated.
@@ -63,12 +58,13 @@ char *strcpy(char *dst, const char *src) {
 }
 
 char *strncpy(char *dst, const char *src, size_t n) {
-  size_t i, src_len, dst_len;
+  // size_t i, src_len, dst_len;
+  size_t i;
 
-  src_len = strlen(src);
-  dst_len = strlen(src);
-  if (src_len >= n) {}
-  else if(src_len < n) {}
+  // src_len = strlen(src);
+  // dst_len = strlen(src);
+  // if (src_len >= n) {}
+  // else if(src_len < n) {}
 
   for (i = 0; i < n && src[i] != '\0'; i++)
       dst[i] = src[i];
@@ -86,17 +82,12 @@ char *strcat(char *dst, const char *src) {
   //      dest string must have enough space for the  result.   If  dest  is  not
   //      large  enough, program behavior is unpredictable; buffer overruns are a
   //      favorite avenue for attacking secure programs.
-
   //      The strncat() function is similar, except that
-
   //      *  it will use at most n bytes from src; and
-
   //      *  src does not need to be null-terminated if it  contains  n  or  more
   //         bytes.
-
   //      As  with  strcat(),  the resulting string in dest is always null-termi‐
   //      nated.
-
   //      If src contains n or more bytes, strncat() writes n+1 bytes to dest  (n
   //      from  src plus the terminating null byte).  Therefore, the size of dest
   //      must be at least strlen(dest)+n+1.
@@ -107,7 +98,7 @@ char *strcat(char *dst, const char *src) {
   // 如果源对象和目标对象重叠，则行为是未定义的。
   // 如果 dest 不是指向以空字符结尾的字节字符串的指针，或者 src 不是指向字符数组的指针，则行为是未定义的。
   char * ret = dst;
-  size_t i = 0;
+  // size_t i = 0;
   while(*ret != '\0') {
     ret ++;
   }
@@ -127,29 +118,24 @@ int strcmp(const char *s1, const char *s2) {
   //      The  strcmp()  function compares the two strings s1 and s2.  The locale
   //      is not taken into account (for  a  locale-aware  comparison,  see  str‐
   //      coll(3)).  The comparison is done using unsigned characters.
-
   //      strcmp() returns an integer indicating the result of the comparison, as
   //      follows:
-
   //      • 0, if the s1 and s2 are equal;
-
   //      • a negative value if s1 is less than s2;
-
   //      • a positive value if s1 is greater than s2.
-
   //      The strncmp() function is similar, except it compares  only  the  first
   //      (at most) n bytes of s1 and s2.
   size_t l_s1, l_s2, l, i = 0;
   l_s1 = strlen(s1);
   l_s2 = strlen(s2);
-  l = min(l_s1, l_s2);
+  l = (l_s1 < l_s2) ? l_s1 : l_s2;
   while(i < l) {
     if(s1[i] > s2[i]) return 1;
-    else iff(s1[i] < s2[i]) return -1;
+    else if(s1[i] < s2[i]) return -1;
     i ++;
   }
   if(l_s1 > l) return 1;
-  else iff(l_s2 > l) return -1;
+  else if(l_s2 > l) return -1;
 
   return 0;
 }
@@ -170,11 +156,13 @@ void *memset(void *s, int c, size_t n) {
   // RETURN VALUE
   //        The memset() function returns a pointer to the memory area s.
   size_t i;
-  if(s == NULL || n == 0) return s;
+  unsigned char *p1 = s;
+
+  if(p1 == NULL || n == 0) return s;
   for(i = 0; i < n; i ++) {
-    s[i] = (char)c;
+    *p1 ++ = (char)c;
   }
-  s[i] = '\0';
+  *p1 = '\0';
 
   return s;
 
@@ -208,12 +196,14 @@ void *memcpy(void *out, const void *in, size_t n) {
   // （即链接到glibc 2.14之前版本的）使用能够安全处理重叠缓冲区情况的memcpy()实现（
   // 通过提供一个"较旧"的memcpy()实现，该实现被别名为memmove(3)）。
   size_t i;
-  if(in == out) memmove(out, in, n);
+  unsigned char *p1 = out;
+  const unsigned char *p2 = in;
 
+  if(p1 == p2) memmove(out, in, n);
   for(i = 0; i < n; i ++) {
-    out[i] = in[i];
+    // out[i] = in[i];
+    *p1 ++ = *p2 ++;
   }
-
 
   return out;
 }
@@ -244,11 +234,19 @@ int memcmp(const void *s1, const void *s2, size_t n) {
   // 按字节比较，不是按其他类型（如 int）
   // 无符号比较：(unsigned char)s1[i] - (unsigned char)s2[i]
   // n=0 时返回 0：零长度区域被认为相等
+
+  // size_t i = 0, l_s1 = 0, l_s2 = 0;
   size_t i = 0;
+  const unsigned char *p1 = s1;
+  const unsigned char *p2 = s2;
+
   if(n == 0) return 0;
+  // l_s1 = strlen(s1), l_s2 = strlen(s2);
+
   while(i < n) {
-    if(*s1 < *s2) return -1;
-    else if(*s1 > *s2) return 1;
+    if(*p1 < *p2) return -1;
+    else if(*p1 > *p2) return 1;
+    p1 ++, p2 ++;
   }
   
   return 0;
