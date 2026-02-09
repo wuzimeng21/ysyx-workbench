@@ -20,9 +20,7 @@ size_t strlen(const char *s) {
   while(s[l] != '\0'){
     l ++;
   }
-
   return l;
-
 }
 
 char *strcpy(char *dst, const char *src) {
@@ -47,31 +45,34 @@ char *strcpy(char *dst, const char *src) {
   //  如果字符串重叠，则行为未定义。
   //  如果 dest 不是指向字符数组的指针，或者 src 不是指向以空字符结尾的字节字符串的指针，则行为未定义。
     char * ret = dst;
+    putstr("enter strcpy\n");
+    putstr(dst);
     if(dst == NULL || src == NULL) return dst;
-
+    putstr("enter strcpy1\n");
     while (*src != '\0'){
-      *ret ++ = *src ++;
+      putstr("enter strcpy2\n");
+      *dst = *src;
+      dst ++, src ++;
     }
-    * ret = '\0';
+    putstr("enter strcpy3\n");
+    * dst = '\0';
+    putstr(ret);
+    putstr("\n");
     return ret;
-
 }
 
 char *strncpy(char *dst, const char *src, size_t n) {
-  // size_t i, src_len, dst_len;
+  // 与 (1) 相同，但函数不再将零写入目标数组以填充到 count，
+  // 而是在写入终止空字符后停止（如果源中没有空字符，它会在 dest[count] 处写入一个然后停止）。
   size_t i;
-
-  // src_len = strlen(src);
-  // dst_len = strlen(src);
-  // if (src_len >= n) {}
-  // else if(src_len < n) {}
-
-  for (i = 0; i < n && src[i] != '\0'; i++)
+  char * ret = dst;
+  for (i = 0; i < n && src[i] != '\0'; i++) {
       dst[i] = src[i];
+  }
   for ( ; i < n; i++)
       dst[i] = '\0';
-
-  return dst;
+  
+  return ret;
 }
 
 char *strcat(char *dst, const char *src) {
@@ -91,22 +92,25 @@ char *strcat(char *dst, const char *src) {
   //      If src contains n or more bytes, strncat() writes n+1 bytes to dest  (n
   //      from  src plus the terminating null byte).  Therefore, the size of dest
   //      must be at least strlen(dest)+n+1.
-  // 将最多 count 个字符从 src 指向的字符数组追加到 dest 指向的以空字符结尾的字节字符串的末尾，
-  // 如果在 src 中遇到空字符则停止。字符 src[0] 替换 dest 末尾的空终止符。
-  // 终止空字符始终附加在末尾（因此函数最多可以写入 count+1 个字节）。
-  // 如果目标数组没有足够的空间容纳 dest 的内容和 src 的前 count 个字符，以及终止空字符，则行为是未定义的。
-  // 如果源对象和目标对象重叠，则行为是未定义的。
-  // 如果 dest 不是指向以空字符结尾的字节字符串的指针，或者 src 不是指向字符数组的指针，则行为是未定义的。
+// 1) 将 src 指向的以 null 结尾的字节字符串的副本附加到 dest 指向的以 null 结尾的字节字符串的末尾。
+// 字符 src[0] 替换 dest 末尾的 null 终止符。结果字节字符串以 null 结尾。
+//  如果目标数组不足以容纳 src 和 dest 的内容以及终止 null 字符，则行为是未定义的。
+//  如果字符串重叠，则行为是未定义的。
+//  如果 dest 或 src 都不是指向以 null 结尾的字节字符串的指针，则行为是未定义的。  
   char * ret = dst;
-  // size_t i = 0;
-  while(*ret != '\0') {
-    ret ++;
+  // size_t l = strlen(dst), L = sizeof(dst) / sizeof(char), i = 0;
+  // size_t l_left = L - l;
+  if(dst == NULL || src == NULL) return ret;
+  while(*dst != '\0') {
+    dst ++;
   }
 
   while(*src != '\0') {
-    *ret = *src;
-    src ++;
+    *dst = *src;
+    src ++, dst ++;
+    // i ++;
   }
+  // *dst = '\0';
 
   return ret;
 
@@ -130,8 +134,8 @@ int strcmp(const char *s1, const char *s2) {
   l_s2 = strlen(s2);
   l = (l_s1 < l_s2) ? l_s1 : l_s2;
   while(i < l) {
-    if(s1[i] > s2[i]) return 1;
-    else if(s1[i] < s2[i]) return -1;
+    if(s1[i] > s2[i]) return s1[i] - s2[i];
+    else if(s1[i] < s2[i]) return s1[i] - s2[i];
     i ++;
   }
   if(l_s1 > l) return 1;
@@ -140,8 +144,26 @@ int strcmp(const char *s1, const char *s2) {
   return 0;
 }
 
+
+
 int strncmp(const char *s1, const char *s2, size_t n) {
-  panic("Not implemented");
+    // 比较前 n 个字符
+    unsigned char c1;
+    unsigned char c2;
+
+    for (size_t i = 0; i < n; i++) {
+        c1 = (unsigned char)s1[i];
+        c2 = (unsigned char)s2[i];        
+        if (c1 != c2) {
+            return (int)c1 - (int)c2;
+        }
+        // 如果到达字符串结尾，它们相等
+        if (c1 == '\0') {
+            return 0;
+        }
+    }
+    // 前 n 个字符都相等
+    return 0;
 }
 
 void *memset(void *s, int c, size_t n) {
@@ -157,19 +179,54 @@ void *memset(void *s, int c, size_t n) {
   //        The memset() function returns a pointer to the memory area s.
   size_t i;
   unsigned char *p1 = s;
-
+  putstr("enter memset1\n");
   if(p1 == NULL || n == 0) return s;
   for(i = 0; i < n; i ++) {
-    *p1 ++ = (char)c;
+    *p1 =  (unsigned char)c;
+    p1 ++;
+    putch(*p1);
   }
+  putstr("enter memset2\n");
   *p1 = '\0';
-
+  putstr("enter memset3\n");
   return s;
-
 }
 
+
 void *memmove(void *dst, const void *src, size_t n) {
-  panic("Not implemented");
+  // memmove 干了三件事：
+  // 复制内存块：从 src 复制 n 个字节到 dst
+  // 检查重叠：比较 dst 和 src 的地址
+  // 选择方向：
+  // 如果 dst < src：从前往后复制
+  // 如果 dst > src：从后往前复制（避免覆盖）
+  // 如果 dst == src：什么都不做
+    if (dst == NULL || src == NULL || n == 0) {
+        return dst;
+    }
+    
+    unsigned char *d = dst;
+    const unsigned char *s = src;
+    
+    // 相同地址或长度为0，直接返回
+    if (d == s) {
+        return dst;
+    }
+    
+    // 检查重叠并决定复制方向
+    if (d < s) {
+        // 目标在源前面，从前往后复制
+        for (size_t i = 0; i < n; i++) {
+            d[i] = s[i];
+        }
+    } else {
+        // 目标在源后面，从后往前复制（避免覆盖）
+        for (size_t i = n; i > 0; ) {
+          i --;
+          d[i] = s[i];
+        }
+    }
+    return dst;
 }
 
 void *memcpy(void *out, const void *in, size_t n) {
@@ -234,21 +291,20 @@ int memcmp(const void *s1, const void *s2, size_t n) {
   // 按字节比较，不是按其他类型（如 int）
   // 无符号比较：(unsigned char)s1[i] - (unsigned char)s2[i]
   // n=0 时返回 0：零长度区域被认为相等
-
-  // size_t i = 0, l_s1 = 0, l_s2 = 0;
   size_t i = 0;
   const unsigned char *p1 = s1;
   const unsigned char *p2 = s2;
-
+  putstr("enter memcmp1\n");
   if(n == 0) return 0;
-  // l_s1 = strlen(s1), l_s2 = strlen(s2);
+  putstr("enter memcmp2\n");
 
   while(i < n) {
+    putstr("enter memcmp3\n");
     if(*p1 < *p2) return -1;
     else if(*p1 > *p2) return 1;
-    p1 ++, p2 ++;
+    p1 ++, p2 ++, i ++;
   }
-  
+  putstr("enter memcmp4\n");
   return 0;
 
 }

@@ -11,81 +11,130 @@
 
 // ===================== stdout =========================
 // TODO PA2 add: 2026.2.3
-int vprintf(const char *fmt, ...) {
+// stdlib.c has a atoi()
+static char * itoa_klib(int num) {
+    int i = 0;
+    int is_negative = 0;
+    static char str[32];
+    // // char *ret = str;
+    if (num == 0) {
+      str[i ++] = '0';
+      str[i] = '\0';
+      return str;
+    }
+    
+    // 处理负数（只支持十进制）
+    if (num < 0) {
+        is_negative = 1;
+        num = -num;
+    }
+
+    // 转换数字
+    while (num != 0) {
+        int remainder = num % 10;
+        str[i] = (remainder + '0');
+        i ++;
+        num = num / 10;
+    }
+    if (is_negative) str[i ++] = '-';
+
+    str[i] = '\0';
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char temp = str[start];
+        str[start] = str[end];
+        str[end] = temp;
+        start++;
+        end--;
+    }
+    // putstr(str);
+    // putstr("\n");
+    return str;
+}
+
+int vprintf(const char *fmt, va_list ap) {
   // 1) 将结果写入输出流 stdout。
-  va_list ap;
-  // char *s = fmt;
   int t = 0, cnt = 0;
-  const char* p = "";
-  va_start(ap, fmt);
+  char* p = "";
 
   while(*fmt != '\0') {
-    if(*fmt ==  '%') {
+    if(*fmt == '%') {
       fmt ++;
       if(*fmt == 'd') {
         t = va_arg(ap, int);
-        p = (const char *)(t + '0');
+        p = itoa_klib(t);
       }
       else if(*fmt == 's') {
-        p = va_arg(ap, const char*);
+        p = va_arg(ap, char*);
       }
-      // putch(p);
-      while(*p ++ != '\0') putch(*p);
-      // putstr(p);
-    }
-    else putch(*fmt);
-    cnt ++;
-    fmt ++;
-  }
-  va_end(ap);
 
+      while(*p != '\0') {
+        putch(*p);
+        cnt ++;
+        p ++;
+      }
+      p = "";
+      fmt ++;
+    }
+    else {
+      putch(*fmt);
+      fmt ++, cnt ++;
+    }
+  }
   return cnt;
 }
 
 int printf(const char *fmt, ...) {
   // 1) 将结果写入输出流 stdout。
-  int res = vprintf(fmt);
-  return res;
+  va_list ap;
+  int cnt;
+  
+  va_start(ap, fmt);
+  cnt = vprintf(fmt, ap);
+  va_end(ap);
+  
+  return cnt;
 }
 
 // ===================== buffer =========================
 int vsprintf(char *out, const char *fmt, va_list ap) {
   // 3) 将结果写入字符字符串 buffer。
   // 1-3) 如果成功，写入的字符数；如果发生错误，则为负值。
-  // char *buffer = out;
-  // int i, cnt = 0, t = 0, buffer_sz = sizeof(* out) / sizeof(char);
-  // const char * p = "";
+  char *buffer = out;
+  int i, cnt = 0, t = 0;
 
-  // // va_start(ap) ; // va_copy???
+  while(*fmt != '\0') {
+    if(*fmt == '%') {
+      fmt ++;
+      if(*fmt == 'd') {
+        t = va_arg(ap, int);
+        char * num_str = itoa_klib(t);
+        while (*num_str != '\0') {
+            *buffer = *num_str;
+            cnt ++, buffer ++, num_str ++;
+        }
+      }
+      else if(*fmt == 's') {
+        char *p = "";
+        p = va_arg(ap, char *);
+        // putstr(p);
+        while (*p != '\0') {
+            *buffer = *p;
+            cnt ++, buffer ++, p ++;
+        }     
+      } 
+      fmt ++;
+    }
+    else {
+      *buffer = *fmt;
+      cnt ++, buffer ++, fmt ++;
+    }
+  }
 
-  // while(*fmt != '\0' && cnt < buffer_sz - 1) {
-  //   if(*fmt == '%') {
-  //     fmt ++;
-  //     if(*fmt == 'd') {
-  //       t = va_arg(ap, int);
-  //       // buffer[cnt] = (t + '0');
-  //       *buffer = (t + '0');
-  //     }
-  //     else if(*fmt == 's') {
-  //       p = va_arg(ap, const char*);
-  //       // buffer[cnt] = p;
-  //       *buffer = *p;
-  //     } 
-  //   }
-  //   buffer ++;
-  //   cnt ++;
-  //   fmt ++;
-  // }
+  for(i = 0; i < cnt; i ++) putch(out[i]);
 
-  // // va_end(ap);
-  // if(cnt == buffer_sz - 1) buffer[buffer_sz - 1] = '\0';
-
-  // for(i = 0; i < cnt; i ++) {
-  //   // putch(buffer[i]);  // output buffer
-  //   while(*buffer[i] ++ != '\0') putch(*buffer[i]);
-  // }
-
-  return 0;
+  return cnt;
 }
 
 int sprintf(char *out, const char *fmt, ...) {
@@ -107,7 +156,14 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
   // 除非 bufsz 为零，否则生成的字符字符串将以空字符终止。
   // 如果 bufsz 为零，则不写入任何内容，
   // buffer 可以是空指针，但仍会计算并返回返回值（不包括空终止符的写入字节数）。
-  panic("Not implemented");
+  va_list ap;
+  int cnt;
+  
+  va_start(ap, fmt);
+  cnt = vsnprintf(out, n, fmt, ap);
+  va_end(ap);
+  
+  return cnt;
 }
 
 
@@ -119,9 +175,51 @@ int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
   // 4) 如果成功，写入的字符数；如果发生错误，则为负值。
   // 如果由于 buf_size 限制导致生成的字符串被截断，函数将返回将被写入的总字符数（不包括终止空字节）
   // 如果未施加限制的话。
-  int cnt = 0;
-  
-  return cnt;
+    char *buffer = out;
+    int cnt = 0;
+    int num;
+    
+    if (n == 0 || buffer == NULL) return 0;
+    
+    size_t remaining = n - 1; // 为'\0'保留位置
+    
+    while (*fmt != '\0' && remaining > 0) {
+        if (*fmt == '%') {
+            fmt++;
+            if(*fmt == 'd'){ // 整数
+                num = va_arg(ap, int);
+                char * num_str = itoa_klib(num);
+                while (*num_str != '\0' && remaining > 0) {
+                    *buffer ++ = *num_str ++;
+                    cnt ++;
+                    remaining --;
+                }
+            }
+            else if(*fmt == 's'){ // 字符串
+                char * p = va_arg(ap, char*);
+                while (*p != '\0' && remaining > 0) {
+                    *buffer ++ = *p ++;
+                    cnt ++;
+                    remaining --;
+                }
+
+            }
+            else {
+                *buffer ++ = *fmt;
+                cnt ++;
+                remaining --;
+            }
+            fmt++; 
+        } else {
+            *buffer ++ = *fmt ++;
+            remaining --;
+            cnt ++;
+        }
+    }
+    
+    *buffer = '\0';
+        
+    return cnt;
 }
 
 #endif

@@ -18,6 +18,7 @@
 #include <device/mmio.h>
 #include <isa.h>
 
+
 #if   defined(CONFIG_PMEM_MALLOC)
 static uint8_t *pmem = NULL;
 #else // CONFIG_PMEM_GARRAY
@@ -29,16 +30,20 @@ paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
 
 static word_t pmem_read(paddr_t addr, int len) {
   word_t ret = host_read(guest_to_host(addr), len);
+  record_mtrace(addr, len, ret, PMEM_READ);
   return ret;
 }
 
 static void pmem_write(paddr_t addr, int len, word_t data) {
   host_write(guest_to_host(addr), len, data);
+  record_mtrace(addr, len, data, PMEM_WRITE);
+
 }
 
 static void out_of_bound(paddr_t addr) {
   panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
       addr, PMEM_LEFT, PMEM_RIGHT, cpu.pc);
+
 }
 
 void init_mem() {
@@ -51,7 +56,9 @@ void init_mem() {
 }
 
 word_t paddr_read(paddr_t addr, int len) {
+  // if the address is in pmem, we can use pmem_read
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
+  // if the address is in pmem, we can use mmio_read
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
   return 0;
@@ -62,3 +69,22 @@ void paddr_write(paddr_t addr, int len, word_t data) {
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);
 }
+
+
+void record_mtrace(paddr_t addr, int len, word_t data, int type){
+  if(type == PMEM_READ) {  
+    Log("%s   addr: " FMT_WORD "\tlen: %d\tdata: " FMT_WORD "\t", ANSI_FMT("PMEM READ", ANSI_FG_RED), addr, len, data );
+  }
+  else if(type == PMEM_WRITE) {
+    Log("%s   addr: " FMT_WORD "\tlen: %d\tdata: " FMT_WORD "\t", ANSI_FMT("PMEM WRITE", ANSI_FG_RED), addr, len, data );
+  }
+  else if(type == MMIO_READ) {  
+    Log("%s   addr: " FMT_WORD "\tlen: %d\tdata: " FMT_WORD "\t", ANSI_FMT("MMIO READ", ANSI_FG_RED), addr, len, data );
+  }
+  else if(type == MMIO_WRITE) {
+    Log("%s   addr: " FMT_WORD "\tlen: %d\tdata: " FMT_WORD "\t", ANSI_FMT("MMIO WRITE", ANSI_FG_RED), addr, len, data );
+  }
+  return ;
+
+}
+

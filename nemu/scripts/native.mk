@@ -24,22 +24,26 @@ $(BINARY):: compile_git
 
 # Some convenient rules
 
-override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
+override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt --ftrace=$(ELFFILE)
 override ARGS += $(ARGS_DIFF)
+# override ARGS += --batch
 
 # Command to execute NEMU
 IMG ?=
-NEMU_EXEC := $(BINARY) $(ARGS) -b $(IMG)
+NEMU_EXEC := $(BINARY) $(ARGS) $(IMG) 
 # batch mode to test expr.c
 
 # TODO PA2 2026.2.1: Change nemu to batch mode 
-# $(info ARGS = $(ARGS))
-# $(info IMG = $(IMG))
-# $(info NEMU_EXEC = $(NEMU_EXEC))
-# $(info BINARY = $(BINARY))
-# $(info DIFF_REF_SO = $(DIFF_REF_SO))
+$(info NEMU_EXEC = $(NEMU_EXEC))
+$(info ARGS_DIFF = $(ARGS_DIFF))
+$(info BINARY = $(BINARY))
+$(info ARGS = $(ARGS))
+$(info IMG = $(IMG))
+$(info ELFFILE = $(ELFFILE))
+$(info DIFF_REF_SO = $(DIFF_REF_SO))
 
-run-env: $(BINARY) $(DIFF_REF_SO)
+run-env: $(info run-env)
+	$(BINARY) $(DIFF_REF_SO)
 
 run: run-env
 	$(call git_commit, "run NEMU")

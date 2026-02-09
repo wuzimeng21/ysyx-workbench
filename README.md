@@ -21,8 +21,10 @@ git push
 
 ## nemu
 cd nemu/
+make menuconfig
 make clean
 make
+make run
 
 ## am-kernels
 cd am-kernels/tests/cpu-tests
@@ -30,6 +32,10 @@ make ARCH=riscv32-nemu ALL=dummy run > batch.md// 测试nemu
 make ARCH=riscv32-nemu ALL=dummy gdb
 riscv64-linux-gnu-objdump -d build/dummy-riscv32-nemu.elf
 riscv64-linux-gnu-readelf -a build/dummy-riscv32-nemu.elf
+### am-kernels test klib
+cd am-kernels/tests/cpu-tests/
+make ALL=string ARCH=native run
+make ALL=stdio ARCH=native run
 
 ## project structure
 abstract-machine

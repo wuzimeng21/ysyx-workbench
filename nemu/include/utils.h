@@ -16,7 +16,9 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <elf.h>
 #include <common.h>
+
 
 // ----------- state -----------
 
@@ -75,3 +77,29 @@ uint64_t get_time();
 
 
 #endif
+
+
+// ----------- irigbuf -----------
+
+// #ifdef CONFIG_IRINGBUF
+void insert_iringbuf(const char *inst_trace);
+void pop_iringbuf() ;
+// #endif
+
+
+// ----------- mtrace -----------
+
+#define PMEM_READ 1
+#define PMEM_WRITE 2
+#define MMIO_READ 3
+#define MMIO_WRITE 4
+
+void record_mtrace(paddr_t addr, int len, word_t data, int type);
+
+
+// ----------- mtrace -----------
+
+// void insert_ftrace(Elf32_Ehdr *ehdr);
+void ELF_header_32_parse(Elf32_Ehdr* ehdr) ;
+void section_header_32_parse(Elf32_Ehdr* ehdr) ;
+void pop_ftrace();
