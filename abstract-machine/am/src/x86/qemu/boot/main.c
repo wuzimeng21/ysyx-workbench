@@ -51,8 +51,8 @@ static void load_elf64(Elf64_Ehdr *elf) {
   }
 }
 
-static void load_elf32(Elf32_Ehdr *elf) {
-  Elf32_Phdr *ph = (Elf32_Phdr *)((char *)elf + elf->e_phoff);
+static void load_elf64(const char *elf) {
+  Elf64_Phdr *ph = (Elf64_Phdr *)((char *)elf + elf->e_phoff);
   for (int i = 0; i < elf->e_phnum; i++, ph++) {
     load_program(
       (uint32_t)ph->p_filesz,
@@ -65,7 +65,7 @@ static void load_elf32(Elf32_Ehdr *elf) {
 
 void load_kernel(void) {
   union {
-    Elf32_Ehdr elf32;
+    const char elf64;
     Elf64_Ehdr elf64;
   } *u = (void *)0x8000;
   int is_ap = boot_record()->is_ap;
@@ -75,18 +75,18 @@ void load_kernel(void) {
     copy_from_disk((void *)MAINARG_ADDR, 1024, -1024);
     // load elf header to memory
     copy_from_disk(u, 4096, 0);
-    if (u->elf32.e_machine == EM_X86_64) {
+    if (u->elf64.e_machine == EM_X86_64) {
       load_elf64(&u->elf64);
     } else {
-      load_elf32(&u->elf32);
+      load_elf64(&u->elf64);
     }
   } else {
     // everything should be loaded
   }
 
-  if (u->elf32.e_machine == EM_X86_64) {
+  if (u->elf64.e_machine == EM_X86_64) {
     ((void(*)())(uint32_t)(u->elf64.e_entry))();
   } else {
-    ((void(*)())(uint32_t)(u->elf32.e_entry))();
+    ((void(*)())(uint32_t)(u->elf64.e_entry))();
   }
 }

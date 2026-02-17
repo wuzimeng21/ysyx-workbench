@@ -24,13 +24,14 @@ $(BINARY):: compile_git
 
 # Some convenient rules
 
-override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt --ftrace=$(ELFFILE)
+override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
+override ARGS += --batch
+# override ARGS += --elf=
 override ARGS += $(ARGS_DIFF)
-# override ARGS += --batch
 
 # Command to execute NEMU
 IMG ?=
-NEMU_EXEC := $(BINARY) $(ARGS) $(IMG) 
+NEMU_EXEC := $(BINARY) $(ARGS) $(IMG)
 # batch mode to test expr.c
 
 # TODO PA2 2026.2.1: Change nemu to batch mode 

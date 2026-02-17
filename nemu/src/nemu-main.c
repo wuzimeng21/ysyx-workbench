@@ -31,9 +31,12 @@ int is_exit_status_bad();
 
 int main(int argc, char *argv[]) {
   /* Initialize the monitor. */
+printf("before enter monitor3\n");
 #ifdef CONFIG_TARGET_AM
+  printf("before enter monitor2\n");
   am_init_monitor();
 #else
+  printf("before enter monitor1\n");
   init_monitor(argc, argv);
 #endif
 

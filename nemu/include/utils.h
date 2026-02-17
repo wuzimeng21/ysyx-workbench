@@ -17,6 +17,7 @@
 #define __UTILS_H__
 
 #include <elf.h>
+#include "../src/utils/ftrace.h"
 #include <common.h>
 
 
@@ -76,8 +77,8 @@ uint64_t get_time();
   } while (0)
 
 
-#endif
 
+#endif
 
 // ----------- irigbuf -----------
 
@@ -97,9 +98,20 @@ void pop_iringbuf() ;
 void record_mtrace(paddr_t addr, int len, word_t data, int type);
 
 
-// ----------- mtrace -----------
+// ----------- ftrace -----------
 
-// void insert_ftrace(Elf32_Ehdr *ehdr);
-void ELF_header_32_parse(Elf32_Ehdr* ehdr) ;
-void section_header_32_parse(Elf32_Ehdr* ehdr) ;
-void pop_ftrace();
+// typedef struct {
+// 	char name[32]; // func name, 32 should be enough
+// 	paddr_t addr;
+// 	unsigned char info;
+// 	Elf64_Xword size;
+// } SymEntry;
+
+// void parse_elf_file(int fd) ;
+// SymEntry* find_symbol_func(paddr_t target) ;
+// void parse_elf(const char **elf_files, int elf_file_count) ;
+// void trace_func_call(paddr_t pc, paddr_t target, bool is_tail) ;
+// void trace_func_ret(paddr_t pc) ;
+
+
+

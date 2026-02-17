@@ -49,6 +49,18 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
     }
 #endif
 
+// #ifdef CONFIG_MTRACE
+//     log_write("MTRACE enable...\n");
+// #else
+//     log_write("MTRACE disable...\n");
+// #endif
+
+// #ifdef CONFIG_ITRACE
+//     log_write("ITRACE enable...\n");
+// #else
+//     log_write("ITRACE disable...\n");
+// #endif
+
     /* 2. 单步调试控制台输出 */
     /* 
      * g_print_step: 当执行少量指令（如si命令）时为true
@@ -240,3 +252,5 @@ void cpu_exec(uint64_t n) {
     case NEMU_QUIT: statistic();
   }
 }
+
+
