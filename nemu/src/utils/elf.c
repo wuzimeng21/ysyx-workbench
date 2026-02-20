@@ -1,8 +1,8 @@
-#include <common.h>
+// #include <common.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <elf.h>
-// #include "ftrace.h"
+// #include <elf.h>
+#include "ftrace.h"
 
 // typedef struct {
 // 	char name[32]; // func name, 32 should be enough

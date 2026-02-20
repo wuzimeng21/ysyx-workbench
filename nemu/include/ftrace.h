@@ -2,8 +2,9 @@
 #define __FTRACE_H__
 
 #include <elf.h>
-#include <stdbool.h>
-#include "../../include/memory/paddr.h"
+#include <common.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 typedef struct {
 	char name[32]; // func name, 32 should be enough

@@ -53,18 +53,36 @@ void init_map() {
 }
 
 word_t map_read(paddr_t addr, int len, IOMap *map) {
-  assert(len >= 1 && len <= 8);
-  check_bound(map, addr);
-  paddr_t offset = addr - map->low;
-  invoke_callback(map->callback, offset, len, false); // prepare data to read
-  word_t ret = host_read(map->space + offset, len);
+  // 1. 参数合法性检查
+  assert(len >= 1 && len <= 8);  // 保证访问长度合法（1-8字节）
+  // 2. 边界检查
+  check_bound(map, addr);  // 确保 addr 在 map->low 和 map->high 之间
+  // 3. 计算设备内偏移
+  paddr_t offset = addr - map->low;  // 设备内部偏移地址
+  // 4. 调用设备回调（读之前）
+  invoke_callback(map->callback, offset, len, false); // false 表示读操作
+  // 5. 从设备空间读取数据
+  word_t ret = host_read(map->space + offset, len);  // 从映射空间读数据
+  // add PA2 for dtrace
+  read_dtrace(map, addr);
+  // 6. 返回读到的数据
   return ret;
 }
 
 void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
-  assert(len >= 1 && len <= 8);
-  check_bound(map, addr);
+  // 1. 参数合法性检查
+  assert(len >= 1 && len <= 8);  // 保证访问长度合法
+  // 2. 边界检查
+  check_bound(map, addr);  // 确保 addr 在映射范围内
+  // 3. 计算设备内偏移
   paddr_t offset = addr - map->low;
-  host_write(map->space + offset, len, data);
-  invoke_callback(map->callback, offset, len, true);
+  // 4. 写入数据到设备空间
+  host_write(map->space + offset, len, data);  // 将 data 写入映射空间
+  // 5. 调用设备回调（写之后）
+  invoke_callback(map->callback, offset, len, true); // true 表示写操作
+  // add PA2 for dtrace
+  write_dtrace(map, addr);
+
 }
+
+

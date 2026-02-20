@@ -23,9 +23,6 @@
 
 #include <generated/autoconf.h>
 #include <macro.h>
-// // PA2 add
-// #include <elf.h>
-
 #ifdef CONFIG_TARGET_AM
 #include <klib.h>
 #else

@@ -102,31 +102,38 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
 }
 
 void difftest_step(vaddr_t pc, vaddr_t npc) {
-  CPU_state ref_r;
-
+  CPU_state ref_r;  // 用于存储 REF 的寄存器状态
+  // ==================== 情况1：跳过 DUT 的多条指令 ====================
   if (skip_dut_nr_inst > 0) {
+    // 1.1 先把 REF 的寄存器状态读出来
     ref_difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
+    // 1.2 如果 REF 的 PC 已经追上 NEMU 的 npc，说明同步成功
     if (ref_r.pc == npc) {
-      skip_dut_nr_inst = 0;
-      checkregs(&ref_r, npc);
+      skip_dut_nr_inst = 0;          // 重置计数器
+      checkregs(&ref_r, npc);         // 检查寄存器状态
       return;
     }
+    // 1.3 还没追上，继续跳过
     skip_dut_nr_inst --;
+    // 1.4 如果计数器减到 0 还没追上，说明无法同步，报错
     if (skip_dut_nr_inst == 0)
       panic("can not catch up with ref.pc = " FMT_WORD " at pc = " FMT_WORD, ref_r.pc, pc);
     return;
   }
-
+  // ==================== 情况2：跳过当前指令的检查 ====================
   if (is_skip_ref) {
-    // to skip the checking of an instruction, just copy the reg state to reference design
+    // 2.1 直接把 NEMU 的寄存器状态同步给 REF
     ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
+    // 2.2 重置标志，下次指令恢复正常检查
     is_skip_ref = false;
     return;
   }
-
+  // ==================== 情况3：正常对比流程 ====================
+  // 3.1 让 REF 执行一条指令
   ref_difftest_exec(1);
+  // 3.2 读取 REF 执行后的寄存器状态
   ref_difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
-
+  // 3.3 对比 NEMU 和 REF 的寄存器状态
   checkregs(&ref_r, pc);
 }
 #else

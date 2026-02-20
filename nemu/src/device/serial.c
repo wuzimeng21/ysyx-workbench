@@ -19,24 +19,33 @@
 /* http://en.wikibooks.org/wiki/Serial_Programming/8250_UART_Programming */
 // NOTE: this is compatible to 16550
 
-#define CH_OFFSET 0
+#define CH_OFFSET 0  // 数据寄存器在设备内的偏移
 
 static uint8_t *serial_base = NULL;
 
-
+// 输出一个字符
 static void serial_putc(char ch) {
   MUXDEF(CONFIG_TARGET_AM, putch(ch), putc(ch, stderr));
 }
 
+// 串口 I/O 回调函数
 static void serial_io_handler(uint32_t offset, int len, bool is_write) {
-  assert(len == 1);
+  assert(len == 1);  // 串口只能按字节访问
+
   switch (offset) {
-    /* We bind the serial port with the host stderr in NEMU. */
-    case CH_OFFSET:
-      if (is_write) serial_putc(serial_base[0]);
-      else panic("do not support read");
+    case CH_OFFSET:  // 数据寄存器（偏移 0）
+        /* We bind the serial port with the host stderr in NEMU. */
+      if (is_write) {
+        // 写操作：从寄存器读取字符并输出
+        serial_putc(serial_base[0]);
+      } else {
+        // 读操作：不支持，报错
+        panic("do not support read");
+      }
       break;
-    default: panic("do not support offset = %d", offset);
+
+    default:  // 其他寄存器（未实现）
+      panic("do not support offset = %d", offset);
   }
 }
 

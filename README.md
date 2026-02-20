@@ -26,6 +26,10 @@ make clean
 make
 make run
 
+## native
+make ARCH=native ALL=dummy run
+
+
 ## am-kernels
 cd am-kernels/tests/cpu-tests
 make ARCH=riscv32-nemu ALL=dummy run > batch.md// 测试nemu
@@ -106,3 +110,43 @@ am-kernels
 └── tests                       # 一些具有针对性的测试集
     ├── am-tests                # 针对AM API实现的测试集
     └── cpu-tests               # 针对CPU指令实现的测试集
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+层次	本质	运行环境	抽象程度
+native	直接在真机上运行	Linux/Windows/macOS	最高
+AM	抽象机器层	可运行在多种平台上	中间
+NEMU	模拟器	运行在host系统上	最低
+
+
+在 PA 中的角色
+组件	作用
+native	快速测试、验证算法正确性
+AM	提供统一接口，隔离平台差异
+NEMU	模拟硬件，运行客户程序
+三者配合：
+
+在 native 上快速开发调试
+
+通过 AM 保持代码可移植
+
+在 NEMU 上验证硬件模拟的正确性
+
+八、总结
+概念	一句话定义
+native	直接在真机上运行，最快但不可移植
+AM	抽象机器层，让代码可在不同平台运行
+NEMU	模拟器，模拟硬件执行客户程序
+native 是真机，AM 是桥梁，NEMU 是模拟器！ ✅

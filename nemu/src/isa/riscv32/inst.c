@@ -17,6 +17,8 @@
 #include <cpu/cpu.h>
 #include <cpu/ifetch.h>
 #include <cpu/decode.h>
+// PA2: add
+#include "ftrace.h"
 
 #define R(i) gpr(i)
 #define Mr vaddr_read

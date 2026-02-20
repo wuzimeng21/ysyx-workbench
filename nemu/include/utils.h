@@ -16,8 +16,6 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-#include <elf.h>
-#include "../src/utils/ftrace.h"
 #include <common.h>
 
 
@@ -114,4 +112,8 @@ void record_mtrace(paddr_t addr, int len, word_t data, int type);
 // void trace_func_ret(paddr_t pc) ;
 
 
+// ----------- dtrace -----------
+
+void read_dtrace(IOMap *map, paddr_t addr);
+void write_dtrace(IOMap *map, paddr_t addr);
 

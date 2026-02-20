@@ -30,6 +30,7 @@ typedef struct {
   io_callback_t callback;
 } IOMap;
 
+// 检查给定地址是否在 I/O 映射区域内
 static inline bool map_inside(IOMap *map, paddr_t addr) {
   return (addr >= map->low && addr <= map->high);
 }
