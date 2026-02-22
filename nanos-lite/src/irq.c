@@ -2,6 +2,10 @@
 
 static Context* do_event(Event e, Context* c) {
   switch (e.event) {
+    // add for PA3.2
+    case EVENT_YIELD:
+      Log("HAS_CTE->init_irq->do_event: EVENT_YIELD...");
+      break;
     default: panic("Unhandled event ID = %d", e.event);
   }
 
@@ -9,6 +13,6 @@ static Context* do_event(Event e, Context* c) {
 }
 
 void init_irq(void) {
-  Log("Initializing interrupt/exception handler...");
+  // Log("Initializing interrupt/exception handler...");
   cte_init(do_event);
 }

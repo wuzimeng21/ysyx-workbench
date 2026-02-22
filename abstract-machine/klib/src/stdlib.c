@@ -6,7 +6,8 @@
 static unsigned long int next = 1;
 // ROUNDUP(x, align) 是一个常用宏，
 // 用于将数值 x 向上对齐到 align 的倍数。
-static char *hbrk = (void *)ROUNDUP(heap.start, 4);// riscv32
+// static char *hbrk = (char *)ROUNDUP(heap.start, 4);// riscv32
+static void * hbrk = NULL;// riscv32
 
 int rand(void) {
   // RAND_MAX assumed to be 32767
@@ -45,16 +46,17 @@ void *malloc(size_t size) {
   // Therefore do not call panic() here, else it will yield a dead recursion:
   //   panic() -> putchar() -> (glibc) -> malloc() -> panic()
   size  = (size_t)ROUNDUP(size, 4); // riscv32
-  char * old  = hbrk;
+  void * old  = hbrk;
   hbrk += size;
-  if(size == NULL || size == 0) return old;
+  if(size == 0) return old;
+  hbrk = (void *)ROUNDUP((uintptr_t)hbrk, 4);
   // 检查是否在堆范围内
   assert((uintptr_t)heap.start <= (uintptr_t)hbrk && (uintptr_t)hbrk < (uintptr_t)heap.end);
   for (uint32_t *p = (uint32_t *)old; p != (uint32_t *)hbrk; p ++) {
     *p = 0; // clear the allocated space
   }
-  // 检查内存限制
-  assert((uintptr_t)hbrk - (uintptr_t)heap.start <= setting->mlim);
+  // // 检查内存限制
+  // assert((uintptr_t)hbrk - (uintptr_t)heap.start <= setting->mlim);
   return old;
 #if !(defined(__ISA_NATIVE__) && defined(__NATIVE_USE_KLIB__))
   panic("Not implemented");

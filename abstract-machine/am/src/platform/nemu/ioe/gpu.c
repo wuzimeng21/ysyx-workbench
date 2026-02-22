@@ -32,7 +32,7 @@ void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
   uint32_t * pixels = (uint32_t *)ctl->pixels;
   uint32_t *fb_content = (uint32_t *)(uintptr_t)FB_ADDR;
   int sw = inl(VGACTL_ADDR) & 0xffff;  // 应该从 VGACTL_ADDR 读取
-  int sh = (inl(VGACTL_ADDR) >> 16) & 0xffff;  // 应该从 VGACTL_ADDR 读取
+  // int sh = (inl(VGACTL_ADDR) >> 16) & 0xffff;  // 应该从 VGACTL_ADDR 读取
 
   for(int i = 0; i < w; i ++) {
     for(int j = 0; j < h; j ++) {
