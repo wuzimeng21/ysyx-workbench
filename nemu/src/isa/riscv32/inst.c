@@ -36,6 +36,7 @@ enum {
 #define src1R() do { *src1 = R(rs1); } while (0)
 #define src2R() do { *src2 = R(rs2); } while (0)
 #define immI() do { *imm = SEXT(BITS(i, 31, 20), 12); } while(0)
+// #define CSR() do { word_t csr_addr = BITS(i, 31, 20); } while(0)
 #define immU() do { *imm = SEXT(BITS(i, 31, 12), 20) << 12; } while(0)
 #define immS() do { *imm = (SEXT(BITS(i, 31, 25), 7) << 5) | BITS(i, 11, 7); } while(0)
 #define immJ() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 20) | (BITS(i, 30, 21) << 1) | (BITS(i, 20, 20) << 11) | (BITS(i, 19, 12) << 12);} while(0)
@@ -98,6 +99,22 @@ static int decode_exec(Decode *s) {
         trace_func_call((s)->pc, (s)->dnpc, false); \
     else if (rd == 0 && imm == 0) \
         trace_func_call((s)->pc, (s)->dnpc, true)
+
+#define MRET(s) \
+    int mpp = (cpu.mstatus >> 11) & 0x3;\
+    if (mpp == 0) { \
+        cpu.mode = MODE_U; \
+      } else if (mpp == 1) { \
+        cpu.mode = MODE_S; \
+      } else if (mpp == 3) { \
+        cpu.mode = MODE_M; \
+      } \    
+    cpu.mstatus = (cpu.mstatus & ~(1 << 3)) | \
+                (((cpu.mstatus >> 7) & 1) << 3); \   
+    cpu.mstatus |= (1 << 7); \
+    cpu.mstatus = cpu.mstatus & ~(0x3 << 11);\
+    s->dnpc = cpu.mepc;
+
 
   // leap-year: beqz/sext.w/bnez/remw/seqz/addiw/ld/
   // sum: sw/lui/
@@ -207,6 +224,11 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 000 ????? 00110 11", addiw  , I, R(rd) = SEXT(src1 + imm, 32)); // x[rd] = sext((x[rs1] + sext(immediate))[31:0])
   INSTPAT("0000000 ????? ????? 001 ????? 00100 11", slli   , I, R(rd) = src1 << BITS(imm, 5, 0)); // x[rd] = x[rs1] << shamt
   INSTPAT("0000000 ????? ????? 001 ????? 00110 11", slliw  , I, R(rd) = SEXT(src1 << BITS(imm, 5, 0), 32)); // x[rd] = sext((x[rs1] << shamt)[31:0])
+  
+  // PA3
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(0xb, s->pc)); 
+  INSTPAT("??????? ????? ????? 001 ????? ????? 11", csrrw  , I, word_t csr = BITS(i, 31, 20);R(csr) = src1; R(rd) = csr;); 
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, ;s->dnpc = cpu.mepc); 
 
   // TYPE-S
   INSTPAT("??????? ????? ????? 000 ????? 01000 11", sb     , S, Mw(src1 + imm, 1, src2)); // M[x[rs1] + sext(offset)] = x[rs2][7 : 0];

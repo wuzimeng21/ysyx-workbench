@@ -40,25 +40,25 @@ f(30) f(31)
 .align 3
 .globl __am_asm_trap
 __am_asm_trap:
-  addi sp, sp, -CONTEXT_SIZE
+  addi sp, sp, -CONTEXT_SIZE // 在栈上分配空间
 
-  MAP(REGS, PUSH)
+  MAP(REGS, PUSH) // 展开为所有寄存器的PUSH操作
 
-  csrr t0, mcause
-  csrr t1, mstatus
-  csrr t2, mepc
-
-  STORE t0, OFFSET_CAUSE(sp)
-  STORE t1, OFFSET_STATUS(sp)
-  STORE t2, OFFSET_EPC(sp)
-
+  csrr t0, mcause      // 读取异常原因
+  csrr t1, mstatus     // 读取机器状态
+  csrr t2, mepc        // 读取异常返回地址
+      
+  STORE t0, OFFSET_CAUSE(sp)   // 保存mcause
+  STORE t1, OFFSET_STATUS(sp)  // 保存mstatus
+  STORE t2, OFFSET_EPC(sp)     // 保存mepc  
+  
   # set mstatus.MPRV to pass difftest
   li a0, (1 << 17)
   or t1, t1, a0
   csrw mstatus, t1
 
-  mv a0, sp
-  call __am_irq_handle
+  mv a0, sp // 将栈指针作为参数（即Context*）
+  call __am_irq_handle // 调用C函数处理异常
 
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)
@@ -67,5 +67,5 @@ __am_asm_trap:
 
   MAP(REGS, POP)
 
-  addi sp, sp, CONTEXT_SIZE
+  addi sp, sp, CONTEXT_SIZE  // 释放栈空间
   mret

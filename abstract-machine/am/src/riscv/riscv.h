@@ -100,6 +100,16 @@ enum {
 // ==================== mstatus 寄存器标志位 ====================
 // mstatus（Machine Status Register）的关键标志位
 
+// MPP 
+#define MSTATUS_MPP_MASK  (0x3 << 11)
+// #define MSTATUS_MPP  (1 << 12)
+
+// MIE
+#define MSTATUS_MIE  (1 << 3)
+
+// MPIE
+#define MSTATUS_MPIE  (1 << 7)
+
 // MXR (Make eXecutable Readable)
 // 允许执行权限的页也被读取
 #define MSTATUS_MXR  (1 << 19)
