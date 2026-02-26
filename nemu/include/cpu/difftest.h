@@ -17,6 +17,8 @@
 #define __CPU_DIFFTEST_H__
 
 #include <common.h>
+#include <stdio.h>
+#include <utils.h>
 #include <difftest-def.h>
 
 #ifdef CONFIG_DIFFTEST
@@ -39,6 +41,11 @@ extern void (*ref_difftest_memcpy)(paddr_t addr, void *buf, size_t n, bool direc
 extern void (*ref_difftest_regcpy)(void *dut, bool direction);
 extern void (*ref_difftest_exec)(uint64_t n);
 extern void (*ref_difftest_raise_intr)(uint64_t NO);
+
+
+#define Log(format, ...) \
+    _Log(ANSI_FMT("[%s:%d %s] " format, ANSI_FG_BLUE) "\n", \
+        __FILE__, __LINE__, __func__, ## __VA_ARGS__)
 
 static inline bool difftest_check_reg(const char *name, vaddr_t pc, word_t ref, word_t dut) {
   if (ref != dut) {

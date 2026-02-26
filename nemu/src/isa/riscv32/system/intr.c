@@ -14,6 +14,7 @@
 ***************************************************************************************/
 
 #include <isa.h>
+#include <etrace.h>
 
 
 // NO：异常号
@@ -27,16 +28,16 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   // 可能修改 mstatus 寄存器
   // 将 CPU 的 PC 设置为异常处理入口地址
 
-  cpu->mcause = NO;
-  cpu->mepc = epc;
-  cpu->mstatus = 0x1800;
+  cpu.mcause = NO;
+  cpu.mepc = epc;
+  cpu.mstatus = 0x1800;
 
-struct Context {
-  // TODO: fix the order of these members to match trap.S
-  // uintptr_t mepc, mcause, gpr[NR_REGS], mstatus;
-  uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
-  void *pdir;
-};
+// struct Context {
+//   // TODO: fix the order of these members to match trap.S
+//   // uintptr_t mepc, mcause, gpr[NR_REGS], mstatus;
+//   uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
+//   void *pdir;
+// };
 // add for PA3 etrace
   etrace_log(NO, epc, cpu.mtvec);
 

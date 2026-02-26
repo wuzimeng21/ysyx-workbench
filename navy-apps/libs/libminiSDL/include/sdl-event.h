@@ -13,44 +13,44 @@
 #define enumdef(k) SDLK_##k,
 
 enum SDL_Keys {
-  SDLK_NONE = 0,
-  _KEYS(enumdef)
+  SDLK_NONE = 0,      // 无按键
+  _KEYS(enumdef)      // 展开所有按键（SDLK_ESCAPE, SDLK_F1, ...）
 };
 
 enum SDL_EventType {
-  SDL_KEYDOWN,
-  SDL_KEYUP,
-  SDL_USEREVENT,
+  SDL_KEYDOWN,        // 按键按下事件
+  SDL_KEYUP,          // 按键释放事件
+  SDL_USEREVENT,      // 用户自定义事件
 };
 
 #define SDL_EVENTMASK(ev_type) (1u << (ev_type))
 
 enum SDL_EventAction {
-  SDL_ADDEVENT,
-  SDL_PEEKEVENT,
-  SDL_GETEVENT,
+  SDL_ADDEVENT,       // 添加事件到队列
+  SDL_PEEKEVENT,      // 查看事件但不移除
+  SDL_GETEVENT,       // 获取事件并从队列移除
 };
 
 typedef struct {
-  uint8_t sym;
+  uint8_t sym;        // 按键符号（对应 SDL_Keys 枚举值）
 } SDL_keysym;
 
 typedef struct {
-  uint8_t type;
-  SDL_keysym keysym;
+  uint8_t type;               // 事件类型（SDL_KEYDOWN/SDL_KEYUP）
+  SDL_keysym keysym;          // 按键符号信息
 } SDL_KeyboardEvent;
 
 typedef struct {
-  uint8_t type;
-  int code;
-  void *data1;
-  void *data2;
+  uint8_t type;               // 事件类型（SDL_USEREVENT）
+  int code;                   // 用户事件代码
+  void *data1;                // 用户数据1
+  void *data2;                // 用户数据2
 } SDL_UserEvent;
 
 typedef union {
-  uint8_t type;
-  SDL_KeyboardEvent key;
-  SDL_UserEvent user;
+  uint8_t type;                // 事件类型（所有事件共有的第一个字段）
+  SDL_KeyboardEvent key;       // 键盘事件
+  SDL_UserEvent user;          // 用户事件
 } SDL_Event;
 
 int SDL_PushEvent(SDL_Event *ev);

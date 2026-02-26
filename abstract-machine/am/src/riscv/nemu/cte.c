@@ -41,14 +41,19 @@ Context* __am_irq_handle(Context *c) {
     switch (c->mcause) {
       // TODO: 需要根据不同的 mcause 值设置对应的事件类型
       case 11:
-        ev.event = EVENT_YIELD; 
+        if(c->GPR1 == -1){ 
+          ev.event = EVENT_YIELD;
+        }
+        else{
+          ev.event = EVENT_SYSCALL; 
+        }
         break;
-      case 8:
-        ev.event = EVENT_SYSCALL; 
-        break;
-      case 9:
-        ev.event = EVENT_SYSCALL; 
-        break;
+      // case 8:
+      //   ev.event = EVENT_SYSCALL; 
+      //   break;
+      // case 9:
+      //   ev.event = EVENT_SYSCALL; 
+      //   break;
       case (12|13|15):
         ev.event = EVENT_PAGEFAULT; 
         break;

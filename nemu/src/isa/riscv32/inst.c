@@ -33,6 +33,13 @@ enum {
   TYPE_N, // none
 };
 
+// add for MRET
+enum { 
+    MODE_U,     // 用户模式 (0)
+    MODE_S,     // 监管模式 (1)
+    MODE_M = 3  // 机器模式 (3)
+};
+
 #define src1R() do { *src1 = R(rs1); } while (0)
 #define src2R() do { *src2 = R(rs2); } while (0)
 #define immI() do { *imm = SEXT(BITS(i, 31, 20), 12); } while(0)
@@ -108,9 +115,9 @@ static int decode_exec(Decode *s) {
         cpu.mode = MODE_S; \
       } else if (mpp == 3) { \
         cpu.mode = MODE_M; \
-      } \    
+      }\
     cpu.mstatus = (cpu.mstatus & ~(1 << 3)) | \
-                (((cpu.mstatus >> 7) & 1) << 3); \   
+                (((cpu.mstatus >> 7) & 1) << 3); \
     cpu.mstatus |= (1 << 7); \
     cpu.mstatus = cpu.mstatus & ~(0x3 << 11);\
     s->dnpc = cpu.mepc;
@@ -227,8 +234,8 @@ static int decode_exec(Decode *s) {
   
   // PA3
   INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(0xb, s->pc)); 
-  INSTPAT("??????? ????? ????? 001 ????? ????? 11", csrrw  , I, word_t csr = BITS(i, 31, 20);R(csr) = src1; R(rd) = csr;); 
-  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, ;s->dnpc = cpu.mepc); 
+  INSTPAT("??????? ????? ????? 001 ????? ????? 11", csrrw  , I, word_t csr = BITS(src1, 31, 20);R(csr) = src1; R(rd) = csr;); 
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, MRET(s)); 
 
   // TYPE-S
   INSTPAT("??????? ????? ????? 000 ????? 01000 11", sb     , S, Mw(src1 + imm, 1, src2)); // M[x[rs1] + sext(offset)] = x[rs2][7 : 0];

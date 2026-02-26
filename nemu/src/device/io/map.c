@@ -17,6 +17,7 @@
 #include <memory/host.h>
 #include <memory/vaddr.h>
 #include <device/map.h>
+#include <dtrace.h>
 
 #define IO_SPACE_MAX (32 * 1024 * 1024)
 

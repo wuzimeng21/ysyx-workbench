@@ -5,7 +5,7 @@
 
 # HAS_NAVY 控制是否使用 Navy-apps 用户程序
 # 如果取消注释，将会使用 Navy-apps 编译用户程序
-#HAS_NAVY = 1
+HAS_NAVY = 1
 
 # ramdisk 镜像文件路径
 # 这个文件包含用户程序，会被嵌入到 Nanos-lite 中

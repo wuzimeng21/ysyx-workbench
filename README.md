@@ -29,7 +29,6 @@ make run
 ## native
 make ARCH=native ALL=dummy run
 
-
 ## am-kernels
 cd am-kernels/tests/cpu-tests
 make ARCH=riscv32-nemu ALL=dummy run > batch.md// 测试nemu
@@ -40,6 +39,11 @@ riscv64-linux-gnu-readelf -a build/dummy-riscv32-nemu.elf
 cd am-kernels/tests/cpu-tests/
 make ALL=string ARCH=native run
 make ALL=stdio ARCH=native run
+
+## navy-apps
+<!-- update ramdisk -->
+make ARCH=$ISA-nemu update 
+<!-- if you want to add an app to navy-apps, please add it to navy-apps/Makefile TESTS -->
 
 ## project structure
 abstract-machine

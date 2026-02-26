@@ -1,0 +1,1 @@
+void etrace_log(word_t NO, vaddr_t epc, vaddr_t mtvec);

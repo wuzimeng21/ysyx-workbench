@@ -18,7 +18,6 @@
 
 #include <common.h>
 
-
 // ----------- state -----------
 
 enum { NEMU_RUNNING, NEMU_STOP, NEMU_END, NEMU_ABORT, NEMU_QUIT };
@@ -112,8 +111,4 @@ void record_mtrace(paddr_t addr, int len, word_t data, int type);
 // void trace_func_ret(paddr_t pc) ;
 
 
-// ----------- dtrace -----------
-
-void read_dtrace(IOMap *map, paddr_t addr);
-void write_dtrace(IOMap *map, paddr_t addr);
 

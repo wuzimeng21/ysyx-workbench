@@ -25,6 +25,8 @@ void init_proc() {
   Log("Initializing processes...");
 
   // load program here
+  // add PA3.2 testing loader()
+  naive_uload(NULL, NULL);
 
 }
 
