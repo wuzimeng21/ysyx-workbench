@@ -17,19 +17,33 @@
 int main(int argc, char *argv[], char *envp[]);
 extern char **environ;
 
+// void call_main(uintptr_t *args) {
+//   // 创建一个空的环境变量数组,只包含 NULL 终止符,表示没有环境变量
+//   char *empty[] = {NULL};
+//   // 设置全局环境变量指针,这样 getenv 等函数就能找到环境变量
+//   environ = empty;
+  
+//   // 调用用户程序的 main 函数
+//   //   argc = 0 (没有命令行参数)
+//   //   argv = empty (空参数列表)
+//   //   envp = empty (空环境变量)
+//   // main 函数返回后，用返回值调用 exit
+//   exit(main(0, empty, empty));
+//   assert(0);
+// }
+
 void call_main(uintptr_t *args) {
-  // 创建一个空的环境变量数组,只包含 NULL 终止符,表示没有环境变量
-  char *empty[] = {NULL};
-  // 设置全局环境变量指针,这样 getenv 等函数就能找到环境变量
-  environ = empty;
+  int argc = (int)args[0];
+  char * argv = (char *)(args + sizeof(int));
+  char * envp = (char *)(argc + argv + 1);
+  environ = envp;
   
   // 调用用户程序的 main 函数
   //   argc = 0 (没有命令行参数)
   //   argv = empty (空参数列表)
   //   envp = empty (空环境变量)
   // main 函数返回后，用返回值调用 exit
-  exit(main(0, empty, empty));
+  exit(main(argc, argv, envp));
   assert(0);
 }
-
 

@@ -66,9 +66,35 @@ void __am_switch(Context *c) {
   }
 }
 
-void map(AddrSpace *as, void *va, void *pa, int prot) {
+void map(AddrSpace *as, void *va, void *pa, int prot)
+{
+    assert(as->ptr);
+    assert((uintptr_t)va % PGSIZE == 0);
+    assert((uintptr_t)pa % PGSIZE == 0);
+    uintptr_t pt1 = (uintptr_t)as->ptr;
+    uintptr_t *pte1 = (uintptr_t *)(pt1 + ((uintptr_t)va >> 22) * 4);
+    uintptr_t pt2 = *pte1 >> 10 << 12;
+    if ((*pte1 & 1) == 0)
+    {
+        pt2 = (uintptr_t)pgalloc_usr(PGSIZE);
+        *pte1 = 0;
+        *pte1 |= 1;
+        *pte1 |= pt2 >> 12 << 10;
+    }
+    uintptr_t *pte2 = (uintptr_t *)(pt2 + ((uintptr_t)va << 10 >> 22) * 4);
+    assert((*pte2 & 1) == 0);
+    *pte2 = 0;
+    *pte2 |= 1;
+    *pte2 |= (uintptr_t)pa >> 12 << 10;
 }
 
 Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
-  return NULL;
+  Context * c = (Context *)(kstack.end - sizeof(Context));
+  c->mepc = (uintptr_t)entry;
+  c->mstatus = 0x1800;
+  // set sp pointer
+  c->gpr[2] = (uintptr_t)kstack.end;
+  // keep arg
+  // c->gpr[10] = (uintptr_t)arg;
+  return c;
 }

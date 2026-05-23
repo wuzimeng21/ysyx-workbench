@@ -1,4 +1,8 @@
 #include <common.h>
+#include <cpu/cpu.h>
+#include <isa.h>
+
+extern CPU_state cpu;
 
 // 异常名称表
 static const char *exception_names[] = {

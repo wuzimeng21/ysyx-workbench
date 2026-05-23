@@ -40,6 +40,7 @@ $(info ARGS_DIFF = $(ARGS_DIFF))
 $(info BINARY = $(BINARY))
 $(info ARGS = $(ARGS))
 $(info IMG = $(IMG))
+$(info IMAGE = $(IMAGE))
 $(info ELFFILE = $(ELFFILE))
 $(info DIFF_REF_SO = $(DIFF_REF_SO))
 

@@ -47,6 +47,8 @@ Context* __am_irq_handle(Context *c) {
         else{
           ev.event = EVENT_SYSCALL; 
         }
+        // pc + 4
+        c->mepc += 4;
         break;
       // case 8:
       //   ev.event = EVENT_SYSCALL; 
@@ -100,8 +102,22 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
   return true;
 }
 
+// struct Context {
+//   // TODO: fix the order of these members to match trap.S
+//   // uintptr_t mepc, mcause, gpr[NR_REGS], mstatus;
+//   uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
+//   void *pdir; // (Page Directory)
+// };
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
-  return NULL;
+  Context * c = (Context *)(kstack.end - sizeof(Context));
+  c->mepc = (uintptr_t)entry;
+  c->mstatus = 0x1800;
+  // set sp pointer
+  c->gpr[2] = (uintptr_t)kstack.end;
+  // keep arg
+  c->gpr[10] = (uintptr_t)arg;
+  // AM_REG_SP();
+  return c;
 }
 
 void yield() {

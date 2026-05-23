@@ -27,6 +27,11 @@ typedef struct {
   word_t mepc;
   word_t mcause;
   word_t mode;
+  // add for PA4
+  bool INTR;
+  // PA4
+  word_t satp;
+
 } MUXDEF(CONFIG_RV64, riscv64_CPU_state, riscv32_CPU_state);
 
 // decode
@@ -36,6 +41,14 @@ typedef struct {
   } inst;
 } MUXDEF(CONFIG_RV64, riscv64_ISADecodeInfo, riscv32_ISADecodeInfo);
 
-#define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
-
+#define isa_mmu_check(vaddr, len, type)                                        \
+    ({                                                                         \
+        int ret = MMU_FAIL;                                                    \
+        if (cpu.satp >> 31)                                                    \
+            ret = MMU_TRANSLATE;                                               \
+        else                                                                   \
+            ret = MMU_DIRECT;                                                  \
+        ret;                                                                   \
+    })
+    
 #endif

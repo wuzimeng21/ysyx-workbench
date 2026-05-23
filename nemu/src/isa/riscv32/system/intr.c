@@ -17,33 +17,64 @@
 #include <etrace.h>
 
 
-// NO：异常号
-// epc：触发异常的指令地址（Exception PC）
-word_t isa_raise_intr(word_t NO, vaddr_t epc) {
-  /* TODO: Trigger an interrupt/exception with ``NO''.
-   * Then return the address of the interrupt/exception vector.
-   */
-  // 保存当前 PC 到 mepc 寄存器
-  // 保存异常原因到 mcause 寄存器
-  // 可能修改 mstatus 寄存器
-  // 将 CPU 的 PC 设置为异常处理入口地址
+// // NO：异常号
+// // epc：触发异常的指令地址（Exception PC）
+// word_t isa_raise_intr(word_t NO, vaddr_t epc) {
+//   /* TODO: Trigger an interrupt/exception with ``NO''.
+//    * Then return the address of the interrupt/exception vector.
+//    */
+//   // 保存当前 PC 到 mepc 寄存器
+//   // 保存异常原因到 mcause 寄存器
+//   // 可能修改 mstatus 寄存器
+//   // 将 CPU 的 PC 设置为异常处理入口地址
 
-  cpu.mcause = NO;
-  cpu.mepc = epc;
-  cpu.mstatus = 0x1800;
+//   cpu.mcause = NO;
+//   cpu.mepc = epc;
+//   cpu.mstatus = 0x1800;
 
-// struct Context {
-//   // TODO: fix the order of these members to match trap.S
-//   // uintptr_t mepc, mcause, gpr[NR_REGS], mstatus;
-//   uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
-//   void *pdir;
-// };
-// add for PA3 etrace
-  etrace_log(NO, epc, cpu.mtvec);
+// // struct Context {
+// //   // TODO: fix the order of these members to match trap.S
+// //   // uintptr_t mepc, mcause, gpr[NR_REGS], mstatus;
+// //   uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
+// //   void *pdir;
+// // };
+// // add for PA3 etrace
+//   etrace_log(NO, epc, cpu.mtvec);
 
-  return cpu.mtvec; // 异常处理入口地址（RISC-V 中就是 mtvec 寄存器的值）
+//   return cpu.mtvec; // 异常处理入口地址（RISC-V 中就是 mtvec 寄存器的值）
+// }
+
+#define IRQ_TIMER 0x80000007 // for riscv32
+
+word_t isa_raise_intr(word_t NO, vaddr_t epc)
+{
+    cpu.mstatus &= ~(1 << 7);
+    cpu.mstatus |= (cpu.mstatus >> 3 & 1) << 7;
+    cpu.mstatus &= ~(1 << 3);
+ 
+    // print_etrace(NO, epc);
+    // add for PA3 etrace
+    etrace_log(NO, epc, cpu.mtvec);
+
+
+    cpu.mepc = epc;
+    cpu.mcause = NO;
+//  cpu.mstatus = 0x1800;
+
+    return cpu.mtvec;
 }
+ 
 
-word_t isa_query_intr() {
-  return INTR_EMPTY;
+// word_t isa_query_intr() {
+//   return INTR_EMPTY;
+// }
+
+word_t isa_query_intr()
+{
+    if (cpu.INTR && cpu.mstatus >> 3 & 1)
+    {
+        cpu.INTR = false;
+        return IRQ_TIMER;
+    }
+    return INTR_EMPTY;
 }

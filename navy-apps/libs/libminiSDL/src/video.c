@@ -4,15 +4,95 @@
 #include <string.h>
 #include <stdlib.h>
 
+// 块级图像传输
 void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect) {
   assert(dst && src);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
+  uint32_t* src_pixels = (uint32_t *)src->pixels;
+  uint32_t* dst_pixels = (uint32_t *)dst->pixels;
+
+  int rect_w, rect_h, src_x, src_y, dst_x, dst_y;
+  if (srcrect) {
+    rect_w = srcrect->w; 
+    rect_h = srcrect->h;
+    src_x = srcrect->x; 
+    src_y = srcrect->y; 
+  } else {
+    rect_w = src->w; 
+    rect_h = src->h;
+    src_x = 0; 
+    src_y = 0;
+  }
+  if (dstrect) {
+    dst_x = dstrect->x;
+    dst_y = dstrect->y;
+  } else {
+    dst_x = 0;
+    dst_y = 0;
+  }
+  if(dst->format->BitsPerPixel == 32) {
+    uint32_t * dst_pixels = (uint32_t *)dst->pixels;
+    for (int i = 0; i < rect_h; ++i) {
+      for (int j = 0; j < rect_w; ++j) {
+        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
+      }
+    }
+  }
+  else if(dst->format->BitsPerPixel == 8) {
+    uint8_t * dst_pixels = (uint8_t *)dst->pixels;
+    for (int i = 0; i < rect_h; ++i) {
+      for (int j = 0; j < rect_w; ++j) {
+        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
+      }
+    }
+  }
+
+  return ;
+
 }
 
+// 填充矩形区域
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
+  if(dst == NULL || dst->pixels == NULL) return ;
+  int x, y, w, h;
+  if (dstrect) {
+    x = dstrect->x;
+    y = dstrect->y;
+    w = dstrect->w;
+    h = dstrect->h;
+  } else {
+    x = 0; y = 0;
+    w = dst->w; h = dst->h;
+  }
+  if(dst->format->BitsPerPixel == 32) {
+    uint32_t * dst_pixels = (uint32_t *)dst->pixels;
+    for(int j = 0; j < h; j ++) {
+      for(int i = 0; i < w; i ++) {
+        dst_pixels[(y + j) * w + x + i] = color;
+      }
+    }
+  }
+  else if(dst->format->BitsPerPixel == 8) {
+    uint8_t * dst_pixels = (uint8_t *)dst->pixels;
+    for(int j = 0; j < h; j ++) {
+      for(int i = 0; i < w; i ++) {
+        dst_pixels[(y + j) * w + x + i] = color;
+      }
+    }
+  }
+
+  return ;
 }
 
+// 更新显示区域
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
+  if(dst->format->BitsPerPixel == 32) {
+    NDL_DrawRect((uint32_t *)s->pixels, x, y, w, h);
+  }
+  else if(dst->format->BitsPerPixel == 8) {
+    NDL_DrawRect((uint8_t *)s->pixels, x, y, w, h);
+  }
+  return ;
 }
 
 // APIs below are already implemented.

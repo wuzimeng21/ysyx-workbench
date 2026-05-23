@@ -155,8 +155,6 @@ static int cmd_d(char *args)
     return 0;
 }
 
-
-
 static int cmd_help(char *args);
 
 static struct {

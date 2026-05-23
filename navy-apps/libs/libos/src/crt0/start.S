@@ -14,6 +14,8 @@ _start:
   
   // 清零帧指针（标记栈底）
   movq $0, %rbp
+  // add
+  movq %rax, %rsp
   
   // x86-64 ABI 要求：在函数入口处，栈指针 (rsp+8) 必须是 16 字节对齐
   // 这是因为函数返回地址占 8 字节，所以 rsp 本身应该是 8 字节对齐
@@ -65,7 +67,9 @@ _start:
   
   // 清零 s0 寄存器（相当于帧指针）
   mv s0, zero
-  
+  //add 
+  mv sp, a0
+
   // 跳转到 C 函数 call_main
   jal call_main
 

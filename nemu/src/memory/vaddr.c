@@ -16,8 +16,17 @@
 #include <isa.h>
 #include <memory/paddr.h>
 
-word_t vaddr_ifetch(vaddr_t addr, int len) {
-  return paddr_read(addr, len);
+word_t vaddr_ifetch(vaddr_t addr, int len)
+{
+    switch (isa_mmu_check(addr, len, MEM_TYPE_IFTECH))
+    {
+    case MMU_DIRECT:
+        return paddr_read(addr, len);
+    case MMU_TRANSLATE:
+        return paddr_read(isa_mmu_translate(addr, len, MEM_TYPE_IFETCH), len);
+    default:
+        assert(0);
+    }
 }
 
 word_t vaddr_read(vaddr_t addr, int len) {

@@ -197,9 +197,20 @@ int _gettimeofday(struct timeval *tv, struct timezone *tz) {
  * @param envp 环境变量
  * @return 成功不返回，失败返回 -1
  */
-int _execve(const char *fname, char * const argv[], char *const envp[]) {
-  _exit(SYS_execve);
-  return 0;
+// int _execve(const char *fname, char * const argv[], char *const envp[]) {
+//   // _exit(SYS_execve);
+//   return __syscall_(SYS_execve, fname, argv, envp);
+// }
+int _execve(const char *fname, char *const argv[], char *const envp[])
+{
+    intptr_t ret = _syscall_(SYS_execve, (uintptr_t)fname, (uintptr_t)argv,
+                             (uintptr_t)envp);
+    if (ret < 0)
+    {
+        errno = -ret;
+        return -1;
+    }
+    return 0;
 }
 
 // ==================== 未使用的系统调用 ====================

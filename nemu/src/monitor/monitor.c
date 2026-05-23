@@ -62,6 +62,7 @@ static long load_img() {
     return 4096; // built-in image size
   }
 
+  Log("Attempting to open: '%s'\n", img_file);
   FILE *fp = fopen(img_file, "rb");
   Assert(fp, "Can not open '%s'", img_file);
 
@@ -92,13 +93,14 @@ static int parse_args(int argc, char *argv[]) {
   };
   int o;
   while ( (o = getopt_long(argc, argv, "-bhl:d:p:e:", table, NULL)) != -1) {
+
     switch (o) {
       case 'b': printf("\nchoose batch mode\n\n");sdb_set_batch_mode(); break;
       case 'p': printf("\nchoose port mode\n\n");sscanf(optarg, "%d", &difftest_port); break;
       case 'l': printf("\nchoose log mode\n\n");log_file = optarg; break;
       case 'd': printf("\nchoose diff mode\n\n");diff_so_file = optarg; break;
       case 'e': printf("\nchoose elf mode\n\n");elf_files[elf_file_count++] = optarg; break;
-      case 1: printf("\nchoose image mode...\n\n");img_file = optarg; return 0;
+      case 1: printf("\nchoose image mode\n\n");img_file = optarg; return 0;
       default:
         printf("\nchoose help mode\n\n");
         printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
@@ -128,6 +130,7 @@ void init_monitor(int argc, char *argv[]) {
   init_rand();
 
   /* Open the log file. */
+  printf("[init_monitor] log_file is %s\n", log_file);
   init_log(log_file);
 
   /* Initialize memory. */
@@ -143,6 +146,7 @@ void init_monitor(int argc, char *argv[]) {
   long img_size = load_img();
 
   /* Initialize differential testing. */
+  printf("[init_monitor] diff_so_file is %s\n", diff_so_file);
   init_difftest(diff_so_file, img_size, difftest_port);
 
   /* Initialize the simple debugger. */

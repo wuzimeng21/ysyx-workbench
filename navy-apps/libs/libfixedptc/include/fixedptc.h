@@ -102,7 +102,9 @@ typedef	__uint128_t fixedptud;
 
 #define FIXEDPT_VCSID "$Id$"
 
+// 小数部分占8位
 #define FIXEDPT_FBITS	(FIXEDPT_BITS - FIXEDPT_WBITS)
+// 用于提取小数部分的掩码
 #define FIXEDPT_FMASK	(((fixedpt)1 << FIXEDPT_FBITS) - 1)
 
 #define fixedpt_rconst(R) ((fixedpt)((R) * FIXEDPT_ONE + ((R) >= 0 ? 0.5 : -0.5)))
@@ -112,9 +114,12 @@ typedef	__uint128_t fixedptud;
 #define fixedpt_sub(A,B) ((A) - (B))
 #define fixedpt_fracpart(A) ((fixedpt)(A) & FIXEDPT_FMASK)
 
+// 256
 #define FIXEDPT_ONE	((fixedpt)((fixedpt)1 << FIXEDPT_FBITS))
 #define FIXEDPT_ONE_HALF (FIXEDPT_ONE >> 1)
+// 512
 #define FIXEDPT_TWO	(FIXEDPT_ONE + FIXEDPT_ONE)
+// 3.14 * 2^8
 #define FIXEDPT_PI	fixedpt_rconst(3.14159265358979323846)
 #define FIXEDPT_TWO_PI	fixedpt_rconst(2 * 3.14159265358979323846)
 #define FIXEDPT_HALF_PI	fixedpt_rconst(3.14159265358979323846 / 2)
@@ -151,11 +156,53 @@ static inline fixedpt fixedpt_abs(fixedpt A) {
 }
 
 static inline fixedpt fixedpt_floor(fixedpt A) {
+	if(A == 0) return A;
+	else if(A > 0) {
+		return ~FIXEDPT_FMASK & A;
+	}
+	else if(A < 0) {
+		if(FIXEDPT_FMASK) return (~FIXEDPT_FMASK & A) - FIXEDPT_ONE;
+		else return A;
+	}
 	return 0;
 }
 
 static inline fixedpt fixedpt_ceil(fixedpt A) {
+	if(A == 0) return A;
+	else if(A) {
+		if(FIXEDPT_FMASK) return (~FIXEDPT_FMASK & A) + FIXEDPT_ONE;
+		return A;
+	}
+	else if(A < 0) {
+		return ~FIXEDPT_FMASK & A;
+	}
 	return 0;
+}
+
+static inline fixedpt fixedpt_fromfloat(void *p) {
+	char * buf = (char *)p;
+	int32_t num1 = 0, num2 = 0, i = 0, sign = 1, div = 1;
+	if(buf[i] == '-') sign = -1, i ++;
+	else if(buf[i] == '+') i ++;
+
+	while(buf[i] != '\0' && buf[i] != '.') {
+		num1 += (buf[i] - '0');
+		num1 *= 10;
+		i ++;
+	}
+	while(buf[i] != '\0' && buf[i] != '.') {
+		num2 += (buf[i] - '0');
+		num2 *= 10;
+		i ++;
+		div *= 10;
+	}
+	int32_t t = (num2 << 8) / div;
+	int32_t num = t + (num1 << 8);
+	fixedpt t1 = fixedpt_fromint(sign *num1);
+	fixedpt t2 = fixedpt_fromint(fixedpt_fracpart(sign * num));
+	fixedpt ret = fixedpt_add(t1, t2);
+
+	return ret;	
 }
 
 /*

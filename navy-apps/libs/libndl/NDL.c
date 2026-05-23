@@ -7,6 +7,7 @@
 static int evtdev = -1;      // 事件设备文件描述符
 static int fbdev = -1;       // 帧缓冲设备文件描述符
 static int screen_w = 0, screen_h = 0;  // 屏幕宽度和高度
+static int rect_x = 0, rect_y = 0;  
 
 uint32_t NDL_GetTicks() {
   struct timeval tv;
@@ -74,13 +75,27 @@ void NDL_OpenCanvas(int *w, int *h) {
       }
       assert(screen_h <= height);
       assert(screen_w <= width);
+      fbdev = open(file_table[FD_FB].name, 0);
+      rect_x = (screen_w - *w) / 2;
+      rect_y = (screen_h - *h) / 2;
       return ;
 
     }
 }
 
+// 向画布`(x, y)`坐标处绘制`w*h`的矩形图像, 并将该绘制区域同步到屏幕上
+// 图像像素按行优先方式存储在`pixels`中, 每个像素用32位整数以`00RRGGBB`的方式描述颜色
 void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
-  int fb_fd = open(file_table[FD_FB][0], 0);
+  int tx = x, ty = y;
+  // int pixels_sz = sizeof(pixels) / sizeof(pixels[0]);
+  tx += rect_x;
+  ty += rect_y;
+  for(int i = 0; i < h; i ++) {
+    int offset = ((ty + i) + tx) * sizeof(pixels[0]);
+    leek(fbdev, offset, SEEK_SET);
+    write(fbdev, pixels, w * sizeof(pixels[0]));
+    pixels += w;
+  }
   
   return ;
 }
