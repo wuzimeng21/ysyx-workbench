@@ -1,4 +1,5 @@
 #include <memory.h>
+#include <proc.h>
 
 static void *pf = NULL;
 
@@ -29,6 +30,7 @@ void free_page(void *p) {
 
 int mm_brk(uintptr_t brk)
 {
+#ifdef HAS_VME
     if (brk <= current->max_brk)
         return 0;
     for (uintptr_t va = current->max_brk,
@@ -43,6 +45,11 @@ int mm_brk(uintptr_t brk)
     }
     current->max_brk = brk;
     return 0;
+#else
+    if (brk > current->max_brk)
+        current->max_brk = brk;
+    return 0;
+#endif
 }
 
 void init_mm() {

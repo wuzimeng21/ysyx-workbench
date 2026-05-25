@@ -3,6 +3,7 @@
 #include <sys/time.h>
 #include <assert.h>
 #include <time.h>
+#include <errno.h>
 #include "syscall.h"
 
 // ==================== 辅助宏 ====================
@@ -103,7 +104,7 @@ void _exit(int status) {
  */
 int _open(const char *path, int flags, mode_t mode) {
   // _exit(SYS_open);  // 暂未实现
-  __syscall_(SYS_open, path, flags, mode);
+  return _syscall_(SYS_open, (intptr_t)path, flags, mode);
   return 0;
 }
 
@@ -125,21 +126,18 @@ int _write(int fd, void *buf, size_t count) {
  * @return 旧堆顶指针，失败返回 -1
  */
 void *_sbrk(intptr_t increment) {
-  // return (void *)-1;  // 暂未实现
   extern char _end;
-  char * program_break = &_end;
-  char * program_break_record = program_break;
-  program_break_record += increment;
-  if(program_break_record < &_end) {
-    return (void *)-1; 
+  static char *program_break = &_end;
+  char *prev_break = program_break;
+  char *new_break = program_break + increment;
+  if (new_break < &_end) {
+    return (void *)-1;
   }
-  if(_syscall_(SYS_brk, increment, program_break_record, 0) == 0 ) {
-    char * program_break_prefer = program_break;
-    program_break = program_break_record;
-    return program_break_prefer;
+  if (_syscall_(SYS_brk, (intptr_t)new_break, 0, 0) == 0) {
+    program_break = new_break;
+    return prev_break;
   }
-  return (void *)-1; 
-
+  return (void *)-1;
 }
 
 /**
@@ -151,8 +149,7 @@ void *_sbrk(intptr_t increment) {
  */
 int _read(int fd, void *buf, size_t count) {
   // _exit(SYS_read);
-  __syscall_(SYS_read, fd, buf, count);
-  return 0;
+  return _syscall_(SYS_read, fd, (intptr_t)buf, count);
 }
 
 /**
@@ -162,8 +159,7 @@ int _read(int fd, void *buf, size_t count) {
  */
 int _close(int fd) {
   // _exit(SYS_close);
-  __syscall_(SYS_close, fd, 0, 0);
-  return 0;
+  return _syscall_(SYS_close, fd, 0, 0);
 }
 
 /**
@@ -175,8 +171,7 @@ int _close(int fd) {
  */
 off_t _lseek(int fd, off_t offset, int whence) {
   // _exit(SYS_lseek);
-  __syscall_(SYS_lseek, fd, offset, whence);
-  return 0;
+  return _syscall_(SYS_lseek, fd, offset, whence);
 }
 
 /**
@@ -187,7 +182,7 @@ off_t _lseek(int fd, off_t offset, int whence) {
  */
 int _gettimeofday(struct timeval *tv, struct timezone *tz) {
   // _exit(SYS_gettimeofday);
-  return __syscall_(SYS_gettimeofday, tv, tz, 0);
+  return _syscall_(SYS_gettimeofday, (intptr_t)tv, (intptr_t)tz, 0);
 }
 
 /**

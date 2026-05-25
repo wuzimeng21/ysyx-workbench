@@ -20,17 +20,12 @@ void hello_fun(void *arg) {
 }
 
 void init_proc() {
-  context_kload(&pcb[0], hello_fun, (void *)1);
-  context_kload(&pcb[1], hello_fun, (void *)2);
-  // context_uload(&pcb[1], "/bin/pal");
-  context_uload(&pcb[1], "/bin/pal", (char *const[]){"--skip", NULL},(char *const[]){NULL});
   switch_boot_pcb();
 
   Log("Initializing processes...");
 
   // load program here
-  // add PA3.2 testing loader()
-  naive_uload(NULL, NULL);
+  naive_uload(NULL, "/bin/dummy");
 
 }
 
@@ -54,6 +49,9 @@ Context *schedule(Context *prev)
     current->cp = prev;
     PCB *switch_to = &pcb[schedule_table[ptr]];
     ptr = (ptr + 1) % (sizeof(schedule_table) / sizeof(int));
+    if (switch_to->cp == NULL) {
+        return prev;
+    }
     current = switch_to;
     return current->cp;
 }
@@ -69,9 +67,8 @@ Context *schedule(Context *prev)
 // } PCB;
 // Context *kcontext(Area kstack, void (*entry)(void *), void *arg) 
 
-void context_kload(PCB * p, void (*entry)(void *), void *arg) {
-  AddrSpace a = p->as;
-  Context * c = kcontext(a, a->area, arg);
+void context_kload(PCB *p, void (*entry)(void *), void *arg) {
+  Context *c = kcontext((Area){p, p + 1}, entry, arg);
   p->cp = c;
 }
 

@@ -16,6 +16,9 @@ typedef union {
   };
 } PCB;
 
-extern PCB *current; // 指向当前正在运行的进程的 PCB。
+extern PCB *current;
+
+void naive_uload(PCB *pcb, const char *filename);
+Context *schedule(Context *prev);
 
 #endif

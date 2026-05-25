@@ -6,7 +6,11 @@
 // 将SDL键盘事件转换为字符
 char handle_key(SDL_Event *ev);
 
+#define ARRLEN(arr) (sizeof(arr) / sizeof(arr[0]))
 #define NR_CMD_NTERM ARRLEN(cmd_table_nterm)
+
+static int sh_help(char *args);
+static int sh_echo(char *echo);
 
 static struct {
   const char *name;
@@ -59,15 +63,15 @@ static int sh_help(char *args) {
 }
 
 // echo
-static int sh_echo(const char *echo) {
+static int sh_echo(char *echo) {
   sh_printf("%s", echo);
   return 0;
 }
 
 // 命令处理函数
 static void sh_handle_cmd(const char *cmd) {
-  char * str = cmd;
-  for (str; *str != NULL; str ++ ) {
+  char *str = (char *)cmd;
+  for (; *str != '\0'; str++) {
     char *str_end = str + strlen(str);
 
     /* extract the first token as the command */
@@ -93,11 +97,10 @@ static void sh_handle_cmd(const char *cmd) {
     }
 
     if (strcmp(envp, "PATH=") == 0) {
-        envp += "/bin";
     }
     setenv("PATH", "/bin", 0);
     if (i == NR_CMD_NTERM) { 
-      execve(pathname, args, envp);
+      execve(pathname, (char *const *)&args, (char *const *)&envp);
       sh_printf("sh_handle_cmd: exec failed\n");
     }
   }

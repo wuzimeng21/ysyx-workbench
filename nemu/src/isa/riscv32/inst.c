@@ -32,13 +32,11 @@ enum {
   TYPE_N, // none
 };
 
-/* PA3: MRET privilege modes — commented out
 enum {
     MODE_U,     // 用户模式 (0)
     MODE_S,     // 监管模式 (1)
     MODE_M = 3  // 机器模式 (3)
 };
-*/
 
 #define src1R() do { *src1 = R(rs1); } while (0)
 #define src2R() do { *src2 = R(rs2); } while (0)
@@ -61,6 +59,24 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
     case TYPE_J:                   immJ(); break;
     case TYPE_R: src1R(); src2R();         break;
     case TYPE_B: src1R(); src2R(); immB(); break;
+  }
+}
+
+static inline word_t csr_op(word_t addr, word_t val, bool write) {
+  switch(addr) {
+    case 0x001: case 0x002: case 0x003: // fflags, frm, fcsr
+    case 0xc00: // cycle
+    case 0xc01: // time
+    case 0xc02: // instret
+    case 0xc80: // cycleh
+    case 0xc81: // timeh
+    case 0xc82: // instreth
+      return 0;
+    case 0x300: case 0xf00: { word_t old = cpu.mstatus; if(write) cpu.mstatus = val; return old; }
+    case 0x305: { word_t old = cpu.mtvec; if(write) cpu.mtvec = val; return old; }
+    case 0x341: { word_t old = cpu.mepc; if(write) cpu.mepc = val; return old; }
+    case 0x342: { word_t old = cpu.mcause; if(write) cpu.mcause = val; return old; }
+    default: panic("csr_op: unknown CSR 0x%x at pc=0x%x\n", addr, cpu.pc); return 0;
   }
 }
 
@@ -92,7 +108,6 @@ static int decode_exec(Decode *s) {
         trace_func_call((s)->pc, (s)->dnpc, true)
 */
 
-/* PA3: MRET — commented out
 #define MRET(s) \
     int mpp = (cpu.mstatus >> 11) & 0x3;\
     if (mpp == 0) { \
@@ -107,7 +122,6 @@ static int decode_exec(Decode *s) {
     cpu.mstatus |= (1 << 7); \
     cpu.mstatus = cpu.mstatus & ~(0x3 << 11);\
     s->dnpc = cpu.mepc;
-*/
 
 
   // leap-year: beqz/sext.w/bnez/remw/seqz/addiw/ld/
@@ -223,10 +237,11 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 001 ????? 00100 11", slli   , I, R(rd) = src1 << BITS(imm, 5, 0)); // x[rd] = x[rs1] << shamt
   INSTPAT("0000000 ????? ????? 001 ????? 00110 11", slliw  , I, R(rd) = SEXT(src1 << BITS(imm, 5, 0), 32)); // x[rd] = sext((x[rs1] << shamt)[31:0])
   
-  // PA3: ecall/csrrw/mret — commented out
-  // INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(0xb, s->pc));
-  // INSTPAT("??????? ????? ????? 001 ????? ????? 11", csrrw  , I, word_t csr = BITS(src1, 31, 20);R(csr) = src1; R(rd) = csr;);
-  // INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, MRET(s));
+  // PA3: ecall/csrrw/csrrs/mret
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(0xb, s->pc));
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, R(rd) = csr_op(imm, src1, true));
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = csr_op(imm, csr_op(imm, 0, false) | src1, true));
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, MRET(s));
 
   // TYPE-S
   INSTPAT("??????? ????? ????? 000 ????? 01000 11", sb     , S, Mw(src1 + imm, 1, src2)); // M[x[rs1] + sext(offset)] = x[rs2][7 : 0];

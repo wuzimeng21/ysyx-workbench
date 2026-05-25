@@ -7,8 +7,9 @@
 #define PGSIZE 4096
 #endif
 
-#define PG_ALIGN __attribute((aligned(PGSIZE)))
+#define PG_ALIGN __attribute__((aligned(PGSIZE)))
 
 void* new_page(size_t);
+int mm_brk(uintptr_t brk);
 
 #endif

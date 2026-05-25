@@ -39,10 +39,11 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
     }
   }
   else if(dst->format->BitsPerPixel == 8) {
-    uint8_t * dst_pixels = (uint8_t *)dst->pixels;
+    uint8_t * dst_pixels8 = (uint8_t *)dst->pixels;
+    uint8_t * src_pixels8 = (uint8_t *)src->pixels;
     for (int i = 0; i < rect_h; ++i) {
       for (int j = 0; j < rect_w; ++j) {
-        dst_pixels[(dst_y + i) * dst->w + dst_x + j] = src_pixels[(src_y + i) * src->w + src_x + j];
+        dst_pixels8[(dst_y + i) * dst->w + dst_x + j] = src_pixels8[(src_y + i) * src->w + src_x + j];
       }
     }
   }
@@ -68,7 +69,7 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
     uint32_t * dst_pixels = (uint32_t *)dst->pixels;
     for(int j = 0; j < h; j ++) {
       for(int i = 0; i < w; i ++) {
-        dst_pixels[(y + j) * w + x + i] = color;
+        dst_pixels[(y + j) * dst->w + x + i] = color;
       }
     }
   }
@@ -76,7 +77,7 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
     uint8_t * dst_pixels = (uint8_t *)dst->pixels;
     for(int j = 0; j < h; j ++) {
       for(int i = 0; i < w; i ++) {
-        dst_pixels[(y + j) * w + x + i] = color;
+        dst_pixels[(y + j) * dst->w + x + i] = color;
       }
     }
   }
@@ -86,13 +87,23 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 
 // 更新显示区域
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
-  if(dst->format->BitsPerPixel == 32) {
+  if (s->format->BitsPerPixel == 32) {
     NDL_DrawRect((uint32_t *)s->pixels, x, y, w, h);
+  } else if (s->format->BitsPerPixel == 8) {
+    // Convert 8-bit palette surface to 32-bit for framebuffer
+    uint32_t *tmp = malloc(w * h * sizeof(uint32_t));
+    assert(tmp);
+    uint8_t *src = (uint8_t *)s->pixels;
+    for (int j = 0; j < h; j++) {
+      for (int i = 0; i < w; i++) {
+        uint8_t idx = src[(y + j) * s->w + x + i];
+        SDL_Color c = s->format->palette->colors[idx];
+        tmp[j * w + i] = (c.a << 24) | (c.r << 16) | (c.g << 8) | c.b;
+      }
+    }
+    NDL_DrawRect(tmp, x, y, w, h);
+    free(tmp);
   }
-  else if(dst->format->BitsPerPixel == 8) {
-    NDL_DrawRect((uint8_t *)s->pixels, x, y, w, h);
-  }
-  return ;
 }
 
 // APIs below are already implemented.

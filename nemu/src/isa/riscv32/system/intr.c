@@ -14,17 +14,24 @@
 ***************************************************************************************/
 
 #include <isa.h>
+#include <etrace.h>
 
-// PA3: isa_raise_intr full implementation — reverted to PA2 stub
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
-  /* TODO: Trigger an interrupt/exception with ``NO''.
+  /* Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
+  cpu.mcause = NO;
+  cpu.mepc = epc;
 
-  return 0;
+  cpu.mstatus &= ~(1 << 7);
+  cpu.mstatus |= (cpu.mstatus >> 3 & 1) << 7;
+  cpu.mstatus &= ~(1 << 3);
+
+  etrace_log(NO, epc, cpu.mtvec);
+
+  return cpu.mtvec;
 }
 
-// PA3: isa_query_intr with timer IRQ — reverted to PA2 stub
 word_t isa_query_intr() {
   return INTR_EMPTY;
 }

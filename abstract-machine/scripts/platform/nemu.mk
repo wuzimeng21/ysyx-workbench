@@ -15,7 +15,8 @@ LDFLAGS   += --gc-sections -e _start
 # NEMUFLAGS += -b -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
 # NEMUFLAGS += -e $(IMAGE).elf
 # NEMUFLAGS += -d $(DIFF_REF_SO)
-NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt --batch --elf=$(IMAGE).elf 
+BATCH ?= -b
+NEMUFLAGS += $(BATCH) -l $(shell dirname $(IMAGE).elf)/nemu-log.txt --elf=$(IMAGE).elf
 
 MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = The insert-arg rule in Makefile will insert mainargs here.

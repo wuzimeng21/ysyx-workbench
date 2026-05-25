@@ -1,3 +1,8 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
 #define SDL_malloc  malloc
 #define SDL_free    free
 #define SDL_realloc realloc
@@ -12,17 +17,18 @@ SDL_Surface* IMG_Load_RW(SDL_RWops *src, int freesrc) {
 }
 
 SDL_Surface* IMG_Load(const char *filename) {
-  int img_fd = open(filename, "r");
-  assert(img_fd >= 0);
+  int img_fd = open(filename, 0, 0);
+  if (img_fd < 0) return NULL;
+
   struct stat st;
   int size = 0;
-  if (stat(filename, &st) == 0) {
-      size =  st.st_size;  
+  if (fstat(img_fd, &st) == 0) {
+    size = st.st_size;
   }
-  void * buf = malloc(size);
-  leek(img_fd, 0, SEEK_SET);
-  size_t ret_read = read(img_fd, buf, size);
-  SDL_Surface* surface =  STBIMG_LoadFromMemory(buf, size);
+  void *buf = malloc(size);
+  lseek(img_fd, 0, SEEK_SET);
+  read(img_fd, buf, size);
+  SDL_Surface *surface = STBIMG_LoadFromMemory(buf, size);
   close(img_fd);
   free(buf);
   return surface;
