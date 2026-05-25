@@ -24,40 +24,13 @@ size_t strlen(const char *s) {
 }
 
 char *strcpy(char *dst, const char *src) {
-  // NAME
-  //        strcpy, strncpy - copy a string
-  // SYNOPSIS
-  //        #include <string.h>
-  //        char *strcpy(char *dest, const char *src);
-  //        char *strncpy(char *dest, const char *src, size_t n);
-  // DESCRIPTION
-  //        The  strcpy()  function  copies the string pointed to by src, including
-  //        the terminating null byte ('\0'), to the buffer  pointed  to  by  dest.
-  //        The  strings  may  not overlap, and the destination string dest must be
-  //        large enough to receive the copy.  Beware  of  buffer  overruns!   (See
-  //        BUGS.)
-  //        The  strncpy()  function is similar, except that at most n bytes of src
-  //        are copied.  Warning: If there is no null byte among the first n  bytes
-  //        of src, the string placed in dest will not be null-terminated.
-  // If  the  length of src is less than n, strncpy() writes additional null
-  // bytes to dest to ensure that a total of n bytes are written.
-  //  如果 dest 数组不够大，则行为未定义。
-  //  如果字符串重叠，则行为未定义。
-  //  如果 dest 不是指向字符数组的指针，或者 src 不是指向以空字符结尾的字节字符串的指针，则行为未定义。
     char * ret = dst;
-    putstr("enter strcpy\n");
-    putstr(dst);
     if(dst == NULL || src == NULL) return dst;
-    putstr("enter strcpy1\n");
     while (*src != '\0'){
-      putstr("enter strcpy2\n");
       *dst = *src;
       dst ++, src ++;
     }
-    putstr("enter strcpy3\n");
     * dst = '\0';
-    putstr(ret);
-    putstr("\n");
     return ret;
 }
 
@@ -110,7 +83,7 @@ char *strcat(char *dst, const char *src) {
     src ++, dst ++;
     // i ++;
   }
-  // *dst = '\0';
+  *dst = '\0';
 
   return ret;
 
@@ -167,28 +140,13 @@ int strncmp(const char *s1, const char *s2, size_t n) {
 }
 
 void *memset(void *s, int c, size_t n) {
-  // NAME
-  //        memset - fill memory with a constant byte
-  // SYNOPSIS
-  //        #include <string.h>
-  //        void *memset(void *s, int c, size_t n);
-  // DESCRIPTION
-  //        The  memset()  function  fills  the  first  n  bytes of the memory area
-  //        pointed to by s with the constant byte c.
-  // RETURN VALUE
-  //        The memset() function returns a pointer to the memory area s.
   size_t i;
   unsigned char *p1 = s;
-  putstr("enter memset1\n");
-  if(p1 == NULL || n == 0) return s;
+  if(p1 == NULL) return s;
   for(i = 0; i < n; i ++) {
     *p1 =  (unsigned char)c;
     p1 ++;
-    putch(*p1);
   }
-  putstr("enter memset2\n");
-  *p1 = '\0';
-  putstr("enter memset3\n");
   return s;
 }
 
@@ -256,9 +214,8 @@ void *memcpy(void *out, const void *in, size_t n) {
   unsigned char *p1 = out;
   const unsigned char *p2 = in;
 
-  if(p1 == p2) memmove(out, in, n);
+  if(p1 == p2) return out;
   for(i = 0; i < n; i ++) {
-    // out[i] = in[i];
     *p1 ++ = *p2 ++;
   }
 
@@ -266,47 +223,17 @@ void *memcpy(void *out, const void *in, size_t n) {
 }
 
 int memcmp(const void *s1, const void *s2, size_t n) {
-  // DESCRIPTION
-  //        The  memcmp()  function compares the first n bytes (each interpreted as
-  //        unsigned char) of the memory areas s1 and s2.
-
-  // RETURN VALUE
-  //        The memcmp() function returns  an  integer  less  than,  equal  to,  or
-  //        greater than zero if the first n bytes of s1 is found, respectively, to
-  //        be less than, to match, or be greater than the first n bytes of s2.
-
-  //        For a nonzero return value, the sign is determined by the sign  of  the
-  //        difference  between  the  first  pair of bytes (interpreted as unsigned
-  //        char) that differ in s1 and s2.
-
-  //        If n is zero, the return value is zero.
-  // 比较内存区域：比较 s1 和 s2 的前 n 个字节
-  // 按无符号字符解释：每个字节都当作 unsigned char（0-255）
-  // 比较规则：逐字节比较，直到找到不同或比较完 n 个字节
-  // 返回值：
-  // < 0：s1 的前 n 字节 小于 s2
-  // = 0：s1 的前 n 字节 等于 s2
-  // > 0：s1 的前 n 字节 大于 s2
-  // 关键特性：
-  // 按字节比较，不是按其他类型（如 int）
-  // 无符号比较：(unsigned char)s1[i] - (unsigned char)s2[i]
-  // n=0 时返回 0：零长度区域被认为相等
   size_t i = 0;
   const unsigned char *p1 = s1;
   const unsigned char *p2 = s2;
-  putstr("enter memcmp1\n");
   if(n == 0) return 0;
-  putstr("enter memcmp2\n");
 
   while(i < n) {
-    putstr("enter memcmp3\n");
     if(*p1 < *p2) return -1;
     else if(*p1 > *p2) return 1;
     p1 ++, p2 ++, i ++;
   }
-  putstr("enter memcmp4\n");
   return 0;
-
 }
 
 #endif

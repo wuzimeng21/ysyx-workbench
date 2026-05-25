@@ -31,7 +31,6 @@ f(30) f(31)
 #define PUSH(n) STORE concat(x, n), (n * XLEN)(sp);
 #define POP(n)  LOAD  concat(x, n), (n * XLEN)(sp);
 
-@ #define CONTEXT_SIZE  ((NR_REGS + 3) * XLEN)
 #define CONTEXT_SIZE  ((NR_REGS + 4) * XLEN)
 #define OFFSET_SP     ( 2 * XLEN)
 #define OFFSET_CAUSE  ((NR_REGS + 0) * XLEN)
@@ -60,9 +59,6 @@ __am_asm_trap:
 
   mv a0, sp // 将栈指针作为参数（即Context*）
   call __am_irq_handle // 调用C函数处理异常
-  // add
-  mv sp, a0
-
 
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)

@@ -67,13 +67,13 @@ word_t mmio_read(paddr_t addr, int len) {
   // return map_read(addr, len, fetch_mmio_map(addr));
   // PA2: for mtrace
   word_t ret =  map_read(addr, len, fetch_mmio_map(addr));
-  // IFDEF(CONFIG_MTdRACE, record_mtrace(addr, len, ret, MMIO_READ));
+  IFDEF(CONFIG_MTRACE, record_mtrace(addr, len, ret, MMIO_READ));
   return ret;
 }
 
 //  向 MMIO 区域写数据
 void mmio_write(paddr_t addr, int len, word_t data) {
   map_write(addr, len, data, fetch_mmio_map(addr));
-  // IFDEF(CONFIG_MTRACE, record_mtrace(addr, len, data, MMIO_WRITE));
+  IFDEF(CONFIG_MTRACE, record_mtrace(addr, len, data, MMIO_WRITE));
 
 }

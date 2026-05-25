@@ -17,7 +17,6 @@
 #include <cpu/cpu.h>
 #include <cpu/ifetch.h>
 #include <cpu/decode.h>
-// PA2: add
 #include "ftrace.h"
 
 #define R(i) gpr(i)
@@ -33,12 +32,13 @@ enum {
   TYPE_N, // none
 };
 
-// add for MRET
-enum { 
+/* PA3: MRET privilege modes — commented out
+enum {
     MODE_U,     // 用户模式 (0)
     MODE_S,     // 监管模式 (1)
     MODE_M = 3  // 机器模式 (3)
 };
+*/
 
 #define src1R() do { *src1 = R(rs1); } while (0)
 #define src2R() do { *src2 = R(rs2); } while (0)
@@ -75,27 +75,11 @@ static int decode_exec(Decode *s) {
   __VA_ARGS__ ; \
 }
 
-/*
-
-#define MAYBE_FUNC_JAL(s) IFDEF(CONFIG_FTRACE, { \
-  if (dest == 1) { \
-    trace_func_call(s->pc, s->dnpc, false); \
-  } else if (dest == 0) { \
-    trace_func_call(s->pc, s->dnpc, true); \
-  } \
-})
-#define MAYBE_FUNC_JALR(s) IFDEF(CONFIG_FTRACE, { \
-    if (s->isa.inst.val == 0x00008067) { \
-      trace_func_ret(s->pc); \
-    } else if (dest == 1) { \
-      trace_func_call(s->pc, s->dnpc, false); \
-    } else if (dest == 0 && imm == 0) { \
-      trace_func_call(s->pc, s->dnpc, true); \
-    } \
-  })
-*/
+#define MAYBE_FUNC_JAL(s) IFDEF(CONFIG_FTRACE, {   if (rd == 1) {     trace_func_call(s->pc, s->dnpc, false);   } else if (rd == 0) {     trace_func_call(s->pc, s->dnpc, true);   } })
+#define MAYBE_FUNC_JALR(s) IFDEF(CONFIG_FTRACE, {     if (s->isa.inst.val == 0x00008067) {       trace_func_ret(s->pc);     } else if (rd == 1) {       trace_func_call(s->pc, s->dnpc, false);     } else if (rd == 0 && imm == 0) {       trace_func_call(s->pc, s->dnpc, true);     }   })
 
 
+/* PA3: ftrace — commented out
 #define TRACE_JAL(s) \
     trace_func_call((s)->pc, (s)->dnpc, (rd == 0))
 
@@ -106,7 +90,9 @@ static int decode_exec(Decode *s) {
         trace_func_call((s)->pc, (s)->dnpc, false); \
     else if (rd == 0 && imm == 0) \
         trace_func_call((s)->pc, (s)->dnpc, true)
+*/
 
+/* PA3: MRET — commented out
 #define MRET(s) \
     int mpp = (cpu.mstatus >> 11) & 0x3;\
     if (mpp == 0) { \
@@ -121,6 +107,7 @@ static int decode_exec(Decode *s) {
     cpu.mstatus |= (1 << 7); \
     cpu.mstatus = cpu.mstatus & ~(0x3 << 11);\
     s->dnpc = cpu.mepc;
+*/
 
 
   // leap-year: beqz/sext.w/bnez/remw/seqz/addiw/ld/
@@ -192,8 +179,9 @@ static int decode_exec(Decode *s) {
 
   INSTPAT("0100000 ????? ????? 000 ????? 01100 11", sub    , R, R(rd) = src1 - src2); // x[rd] = x[rs1] - x[rs2]
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = src1 % src2); // [rd]=x[rs1]%u x[rs2]
-  INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = (SEXT(src1, 32) * SEXT(src2, 32)) >> 5); // x[rd] = (x[rs1] s×s x[rs2]) >>s XLEN
+  INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = ((int64_t)SEXT(src1, 32) * (int64_t)SEXT(src2, 32)) >> 32); // x[rd] = (x[rs1] s×s x[rs2]) >>s XLEN
   INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = src1 * src2); // x[rd] = x[rs1] × x[rs2]
+  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = ((uint64_t)src1 * (uint64_t)src2) >> 32); // x[rd] = (x[rs1] ×u x[rs2]) >>u XLEN
   INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div   ,  R, R(rd) = SEXT(src1, 32) / SEXT(src2, 32)); // x[rd] = x[rs1] ÷s x[rs2]
   INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, R(rd) = src1 / src2); // x[rd]=x[rs1] ÷u x[rs2]
   INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add    , R, R(rd) = src1 + src2); // x[rd] = x[rs1] + x[rs2]
@@ -214,7 +202,8 @@ static int decode_exec(Decode *s) {
   // INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , I, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
   INSTPAT("??????? ????? ????? 000 ????? 00100 11", addi   , I, R(rd) = src1 + imm);  // x[rd] = x[rs1] + sext(imm);
   INSTPAT("??????? ????? ????? 100 ????? 00000 11", lbu    , I, R(rd) = Mr(src1 + imm, 1)); // x[rd] = M[x[rs1] + sext(offset)][7:0];
-  INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I, s->dnpc = (src1 + imm) & ~(word_t)1; TRACE_JALR(s);R(rd) = s->pc + 4); // t = pc + 4; pc = (x[rs1] + sext(offset)) & ~1; x[rd] = t;
+  INSTPAT("??????? ????? ????? 000 ????? 00000 11", lb     , I, R(rd) = SEXT(Mr(src1 + imm, 1), 8)); // x[rd] = sext(M[x[rs1] + sext(offset)][7:0])
+  INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I, s->dnpc = (src1 + imm) & ~(word_t)1; R(rd) = s->pc + 4; MAYBE_FUNC_JALR(s)); // t = pc + 4; pc = (x[rs1] + sext(offset)) & ~1; x[rd] = t;
   INSTPAT("??????? ????? ????? 010 ????? 00000 11", lw     , I, R(rd) = SEXT(Mr(src1 + imm, 4), 32)); // x[rd] = sext(M[x[rs1] + sext(offset)][31:0]);
   INSTPAT("??????? ????? ????? 011 ????? 00100 11", sltiu  , I, R(rd) = src1 < imm); // x[rd] = x[rs1] <u sext(imm);
   INSTPAT("??????? ????? ????? 111 ????? 00100 11", andi   , I, R(rd) = src1 & imm); // x[rd] = x[rs1] & sext(immediate);
@@ -222,6 +211,8 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 101 ????? 00110 11", srliw  , I, R(rd) = SEXT(BITS(src1, 31, 0) >> BITS(imm, 4, 0), 32)); // x[rd] = sext(x[rs1][31:0] >>u shamt)
   INSTPAT("0100000 ????? ????? 101 ????? 00100 11", srai   , I, R(rd) = (sword_t)src1 >> BITS(imm, 5, 0)); // x[rd] = x[rs1] >>s shamt
   INSTPAT("??????? ????? ????? 100 ????? 00100 11", xori   , I, R(rd) = src1 ^imm); // x[rd] = x[rs1] ˆ sext(immediate)
+  INSTPAT("??????? ????? ????? 110 ????? 00100 11", ori    , I, R(rd) = src1 | imm); // x[rd] = x[rs1] | sext(immediate)
+  INSTPAT("??????? ????? ????? 010 ????? 00100 11", slti   , I, R(rd) = (sword_t)src1 < (sword_t)imm); // x[rd] = x[rs1] <s sext(imm)
   INSTPAT("0000000 ????? ????? 101 ????? 00100 11", srli   , I, R(rd) = src1 >> BITS(imm, 5, 0)); // x[rd] = x[rs1] >>u shamt
   INSTPAT("??????? ????? ????? 001 ????? 00000 11", lh     , I, R(rd) = SEXT(Mr(src1 + imm, 2), 16)); // x[rd] = sext(M[x[rs1] + sext(offset)][15:0])
   INSTPAT("??????? ????? ????? 101 ????? 00000 11", lhu    , I, R(rd) = Mr(src1 + imm, 2)); // x[rd] = M[x[rs1] + sext(offset)][15:0]
@@ -232,10 +223,10 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 001 ????? 00100 11", slli   , I, R(rd) = src1 << BITS(imm, 5, 0)); // x[rd] = x[rs1] << shamt
   INSTPAT("0000000 ????? ????? 001 ????? 00110 11", slliw  , I, R(rd) = SEXT(src1 << BITS(imm, 5, 0), 32)); // x[rd] = sext((x[rs1] << shamt)[31:0])
   
-  // PA3
-  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(0xb, s->pc)); 
-  INSTPAT("??????? ????? ????? 001 ????? ????? 11", csrrw  , I, word_t csr = BITS(src1, 31, 20);R(csr) = src1; R(rd) = csr;); 
-  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, MRET(s)); 
+  // PA3: ecall/csrrw/mret — commented out
+  // INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(0xb, s->pc));
+  // INSTPAT("??????? ????? ????? 001 ????? ????? 11", csrrw  , I, word_t csr = BITS(src1, 31, 20);R(csr) = src1; R(rd) = csr;);
+  // INSTPAT("0011000 00010 00000 000 00000 11100 11", mret  , R, MRET(s));
 
   // TYPE-S
   INSTPAT("??????? ????? ????? 000 ????? 01000 11", sb     , S, Mw(src1 + imm, 1, src2)); // M[x[rs1] + sext(offset)] = x[rs2][7 : 0];
@@ -243,7 +234,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 010 ????? 01000 11", sw     , S, Mw(src1 + imm, 4, src2)); // M[x[rs1] + sext(offset)] = x[rs2][31:0]
   INSTPAT("??????? ????? ????? 001 ????? 01000 11", sh     , S, Mw(src1 + imm, 2, src2)); // M[x[rs1] + sext(offset)] = x[rs2][15:0]
   // TYPE-J
-  INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , J, R(rd) = s->pc + 4;s->dnpc = s->pc; s->dnpc += imm; TRACE_JAL(s);); // x[rd] = pc + 4; pc += sext(offset);
+  INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , J, R(rd) = s->pc + 4; s->dnpc = s->pc + imm; MAYBE_FUNC_JAL(s)); // x[rd] = pc + 4; pc += sext(offset);
   // TYPE-B
   INSTPAT("??????? ????? ????? 000 ????? 11000 11", beq    , B, if(src1 == src2) s->dnpc = s->pc + imm); // if(rs1 == rs2) pc += sext(offset)
   INSTPAT("??????? ????? ????? 001 ????? 11000 11", bne    , B, if(src1 != src2) s->dnpc = s->pc + imm);// printf("imm: 0x%u\n", imm);); // if(rs1 != rs2) pc += sext(offset)

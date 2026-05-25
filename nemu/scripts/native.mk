@@ -44,8 +44,7 @@ $(info IMAGE = $(IMAGE))
 $(info ELFFILE = $(ELFFILE))
 $(info DIFF_REF_SO = $(DIFF_REF_SO))
 
-run-env: $(info run-env)
-	$(BINARY) $(DIFF_REF_SO)
+run-env: $(BINARY) $(DIFF_REF_SO)
 
 run: run-env
 	$(call git_commit, "run NEMU")

@@ -15,6 +15,8 @@
 
 #include <isa.h>
 #include <memory/paddr.h>
+// PA2 add for ftrace
+#include "ftrace.h"
 
 void init_rand();
 void init_log(const char *log_file);
@@ -156,8 +158,7 @@ void init_monitor(int argc, char *argv[]) {
   // PA2 add iringbuf 2026.2.6
   IFDEF(CONFIG_ITRACE, init_iringbuf());
   // PA2 add ftrace 2026.2.6
-  // IFDEF(CONFIG_FTRACE, parse_elf(elf_files, elf_file_count));
-  // parse_elf(elf_files, elf_file_count);
+  IFDEF(CONFIG_FTRACE, parse_elf(elf_files, elf_file_count));
 
   /* Display welcome message. */
   welcome();

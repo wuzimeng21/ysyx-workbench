@@ -164,7 +164,10 @@ static inline void update_screen() {
  * 这个函数会被device_update()定期调用
  */
 void vga_update_screen() {
-  // 待实现
+  if (vgactl_port_base && vgactl_port_base[1]) {
+    vgactl_port_base[1] = 0;
+    IFDEF(CONFIG_VGA_SHOW_SCREEN, update_screen());
+  }
 }
 
 // ==================== VGA初始化 ====================
@@ -181,7 +184,7 @@ void init_vga() {
   vgactl_port_base = (uint32_t *)new_space(8);
   
   // 控制寄存器格式：高16位存高度，低16位存宽度
-  vgactl_port_base[0] = (screen_width() << 16) | screen_height();
+  vgactl_port_base[0] = (screen_height() << 16) | screen_width();
 
   // ----- 2. 注册控制寄存器映射 -----
 #ifdef CONFIG_HAS_PORT_IO

@@ -203,33 +203,38 @@ SECTIONS {
 
 /*
  * 代码段边界
+ *
+ * extern char etext[];
+ * extern char _etext[];
  */
-extern char etext[];
-extern char _etext[];
 
 /*
  * 数据段边界
+ *
+ * extern char edata[];
+ * extern char _data[];
  */
-extern char edata[];
-extern char _data[];
 
 /*
  * BSS 段边界 (堆区开始)
+ *
+ * extern char end[];
+ * extern char _end[];
+ * extern char _bss_start[];
  */
-extern char end[];
-extern char _end[];
-extern char _bss_start[];
 
 /*
  * 栈区域
+ *
+ * extern char _stack_top[];
+ * extern char _stack_pointer[];
  */
-extern char _stack_top[];
-extern char _stack_pointer[];
 
 /*
  * 堆起始地址
+ *
+ * extern char _heap_start[];
  */
-extern char _heap_start[];
 
 /*
  * 使用示例:

@@ -78,7 +78,7 @@ void trace_func_call(paddr_t pc, paddr_t target, bool is_tail)
 	// 判断是否落在当前函数，如果是话就不是函数调用
 	SymEntry *cur_i = find_symbol_func(pc);
 	SymEntry *i = find_symbol_func(target);
-	if (cur_i == i)
+	if (cur_i != NULL && cur_i == i)
 		return;
 
 	++call_depth;

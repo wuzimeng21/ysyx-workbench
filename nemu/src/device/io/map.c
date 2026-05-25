@@ -65,7 +65,7 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   // 5. 从设备空间读取数据
   word_t ret = host_read(map->space + offset, len);  // 从映射空间读数据
   // add PA2 for dtrace
-  read_dtrace(map, addr);
+  IFDEF(CONFIG_DTRACE, read_dtrace(map, addr));
   // 6. 返回读到的数据
   return ret;
 }
@@ -82,7 +82,7 @@ void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
   // 5. 调用设备回调（写之后）
   invoke_callback(map->callback, offset, len, true); // true 表示写操作
   // add PA2 for dtrace
-  write_dtrace(map, addr);
+  IFDEF(CONFIG_DTRACE, write_dtrace(map, addr));
 
 }
 

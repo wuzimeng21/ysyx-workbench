@@ -102,7 +102,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
   // 3) 将结果写入字符字符串 buffer。
   // 1-3) 如果成功，写入的字符数；如果发生错误，则为负值。
   char *buffer = out;
-  int i, cnt = 0, t = 0;
+  int cnt = 0, t = 0;
 
   while(*fmt != '\0') {
     if(*fmt == '%') {
@@ -132,7 +132,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     }
   }
 
-  for(i = 0; i < cnt; i ++) putch(out[i]);
+  *buffer = '\0';
 
   return cnt;
 }
