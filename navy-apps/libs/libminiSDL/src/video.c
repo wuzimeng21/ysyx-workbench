@@ -87,6 +87,8 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 
 // 更新显示区域
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
+  if (w == 0) w = s->w;
+  if (h == 0) h = s->h;
   if (s->format->BitsPerPixel == 32) {
     NDL_DrawRect((uint32_t *)s->pixels, x, y, w, h);
   } else if (s->format->BitsPerPixel == 8) {

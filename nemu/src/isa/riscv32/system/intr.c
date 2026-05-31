@@ -27,7 +27,7 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   cpu.mstatus |= (cpu.mstatus >> 3 & 1) << 7;
   cpu.mstatus &= ~(1 << 3);
 
-  etrace_log(NO, epc, cpu.mtvec);
+  // etrace_log(NO, epc, cpu.mtvec);
 
   return cpu.mtvec;
 }

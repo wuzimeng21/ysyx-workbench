@@ -22,7 +22,8 @@ static int parse_event(const char *buf, SDL_Event *event) {
 
   // Search keynames table
   for (int i = 0; i < sizeof(keynames) / sizeof(keynames[0]); i++) {
-    if (strncmp(name, keynames[i], strlen(keynames[i])) == 0) {
+    size_t len = strlen(keynames[i]);
+    if (strncmp(name, keynames[i], len) == 0 && name[len] == '\n') {
       event->key.keysym.sym = i;
       return 1;
     }

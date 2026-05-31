@@ -14,24 +14,6 @@ static Context* (*user_handler)(Event, Context*) = NULL;
  * 然后调用用户注册的事件处理函数。
  */
 Context* __am_irq_handle(Context *c) {
-  printf("========== Context Dump ==========\n");
-  printf("Context at: %p\n", c);
-  
-  // 打印通用寄存器
-  for (int i = 0; i < NR_REGS; i++) {
-    printf("  gpr[%2d] = 0x%08lx", i, c->gpr[i]);
-    // 每行打印4个寄存器
-    if ((i + 1) % 4 == 0) printf("\n");
-  }
-  printf("\n");
-  
-  // 打印CSR寄存器
-  printf("  mcause  = 0x%08lx\n", c->mcause);
-  printf("  mstatus = 0x%08lx\n", c->mstatus);
-  printf("  mepc    = 0x%08lx\n", c->mepc);
-  printf("  pdir    = %p\n", c->pdir);
-  printf("==================================\n");
-  // ----- 1. 检查是否有注册的事件处理函数 -----
   if (user_handler) {
     
     // ----- 2. 创建并初始化事件结构 -----
@@ -56,8 +38,10 @@ Context* __am_irq_handle(Context *c) {
       // case 9:
       //   ev.event = EVENT_SYSCALL; 
       //   break;
-      case (12|13|15):
-        ev.event = EVENT_PAGEFAULT; 
+      case 12:
+      case 13:
+      case 15:
+        ev.event = EVENT_PAGEFAULT;
         break;
       // case 5:
       //   ev.event = EVENT_IRQ_TIMER; 

@@ -11,14 +11,18 @@ char handle_key(SDL_Event *ev);
 
 static int sh_help(char *args);
 static int sh_echo(char *echo);
+static int sh_exit(char *args);
+static int sh_execve(char *args);
 
 static struct {
   const char *name;
   const char *description;
   int (*handler) (char *);
 } cmd_table_nterm [] = {
-  { "help", "help:  Display information about all supported commands", sh_help },
-  { "echo", "echo displays text or variables to the terminal output", sh_echo },
+  { "help",   "help:   Display information about all supported commands", sh_help },
+  { "echo",   "echo:   Display text or variables to the terminal", sh_echo },
+  { "execve", "execve: Execute an external program (usage: execve <prog> [args...])", sh_execve },
+  { "exit",   "exit:   Exit the terminal and return to menu", sh_exit },
 };
 
 // shell专用的打印函数
@@ -47,64 +51,124 @@ static int sh_help(char *args) {
 
   if (arg == NULL) {
     for (i = 0; i < NR_CMD_NTERM; i ++) {
-      printf("%s - %s\n", cmd_table_nterm[i].name, cmd_table_nterm[i].description);
+      sh_printf("%s - %s\n", cmd_table_nterm[i].name, cmd_table_nterm[i].description);
     }
   }
   else {
     for (i = 0; i < NR_CMD_NTERM; i ++) {
       if (strcmp(arg, cmd_table_nterm[i].name) == 0) {
-        printf("%s - %s\n", cmd_table_nterm[i].name, cmd_table_nterm[i].description);
+        sh_printf("%s - %s\n", cmd_table_nterm[i].name, cmd_table_nterm[i].description);
         return 0;
       }
     }
-    printf("Unknown command '%s'\n", arg);
+    sh_printf("Unknown command '%s'\n", arg);
   }
   return 0;
 }
 
 // echo
 static int sh_echo(char *echo) {
-  sh_printf("%s", echo);
+  sh_printf("%s\n", echo);
   return 0;
+}
+
+// exit
+static int sh_exit(char *args) {
+  _exit(0);
+  return 0;
+}
+
+// execve: 显式启动外部程序
+static int sh_execve(char *args) {
+  if (args == NULL || *args == '\0') {
+    sh_printf("Usage: execve <program> [args...]\n");
+    return -1;
+  }
+
+  // 解析程序名
+  char *arg_saveptr;
+  char *prog = strtok_r(args, " \t\n", &arg_saveptr);
+  if (prog == NULL) {
+    sh_printf("Usage: execve <program> [args...]\n");
+    return -1;
+  }
+
+  // 用静态缓冲区避免 execve 加载 ELF 时栈上数据被覆盖
+  static char fullpath[256];
+  if (prog[0] == '/') {
+    snprintf(fullpath, sizeof(fullpath), "%s", prog);
+  } else {
+    snprintf(fullpath, sizeof(fullpath), "/bin/%s", prog);
+  }
+
+  // 构建 argv 数组
+  static char *argv[16];
+  int argc = 0;
+  argv[argc++] = fullpath;  // argv[0] = 完整路径
+
+  char *arg = strtok_r(NULL, " \t\n", &arg_saveptr);
+  while (arg != NULL && argc < 15) {
+    argv[argc++] = arg;
+    arg = strtok_r(NULL, " \t\n", &arg_saveptr);
+  }
+  argv[argc] = NULL;
+
+  static const char *envp[] = {"PATH=/bin", NULL};
+
+  execve(fullpath, argv, (char *const *)envp);
+  sh_printf("execve: %s: failed to execute\n", fullpath);
+  return -1;
 }
 
 // 命令处理函数
 static void sh_handle_cmd(const char *cmd) {
   char *str = (char *)cmd;
-  for (; *str != '\0'; str++) {
-    char *str_end = str + strlen(str);
+  char *saveptr;
+  char *cmd_tmp = strtok_r(str, " \t\n", &saveptr);
+  if (cmd_tmp == NULL) return;
 
-    /* extract the first token as the command */
-    char *cmd_tmp = strtok(str, " ");
-    char * pathname = cmd_tmp;
-    if (cmd_tmp == NULL) { continue; }
+  char *args = saveptr;  // 剩余部分作为参数
 
-    /* treat the remaining string as the arguments,
-     * which may need further parsing
-     */
-    char *args = cmd_tmp + strlen(cmd_tmp) + 1;
-    char *envp = args + strlen(args) + 1;
-    if (args >= str_end) {
-      args = NULL;
-    }
-
-    int i;
-    for (i = 0; i < NR_CMD_NTERM; i ++) {
-      if (strcmp(cmd_tmp, cmd_table_nterm[i].name) == 0) {
-        if (cmd_table_nterm[i].handler(args) < 0) { return; }
-        break;
-      }
-    }
-
-    if (strcmp(envp, "PATH=") == 0) {
-    }
-    setenv("PATH", "/bin", 0);
-    if (i == NR_CMD_NTERM) { 
-      execve(pathname, (char *const *)&args, (char *const *)&envp);
-      sh_printf("sh_handle_cmd: exec failed\n");
+  // 先尝试内置命令
+  int i;
+  for (i = 0; i < NR_CMD_NTERM; i ++) {
+    if (strcmp(cmd_tmp, cmd_table_nterm[i].name) == 0) {
+      if (cmd_table_nterm[i].handler(args) < 0) { return; }
+      break;
     }
   }
 
+  // 如果不是内置命令，尝试作为外部程序执行
+  if (i == NR_CMD_NTERM) {
+    // 构建完整路径: /bin/ + 命令名
+    char fullpath[256];
+    if (cmd_tmp[0] == '/') {
+      snprintf(fullpath, sizeof(fullpath), "%s", cmd_tmp);
+    } else {
+      snprintf(fullpath, sizeof(fullpath), "/bin/%s", cmd_tmp);
+    }
+
+    // 构建 argv 数组: [cmdname, arg1, arg2, ..., NULL]
+    char *argv[16];
+    int argc = 0;
+    argv[argc++] = cmd_tmp;  // argv[0] = 命令名
+
+    if (args && *args) {
+      char *arg_saveptr;
+      char *arg = strtok_r(args, " \t\n", &arg_saveptr);
+      while (arg != NULL && argc < 15) {
+        argv[argc++] = arg;
+        arg = strtok_r(NULL, " \t\n", &arg_saveptr);
+      }
+    }
+    argv[argc] = NULL;
+
+    // 构建 envp 数组: ["PATH=/bin", NULL]
+    const char *envp[] = {"PATH=/bin", NULL};
+
+    execve(fullpath, argv, (char *const *)envp);
+    sh_printf("sh: %s: command not found\n", cmd_tmp);
+  }
 }
 
 // shell主循环

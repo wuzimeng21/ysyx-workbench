@@ -2,6 +2,8 @@
 #include <SDL_bmp.h>
 #include <stdio.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define W 400
 #define H 300
@@ -11,13 +13,26 @@
 //   k/up - page up
 //   gg - first page
 
-// number of slides
-const int N = 3;
 // slides path pattern (starts from 0)
-const char *path = "/share/slides/slides-%d.bmp";
+static const char *path = "/share/slides/slides-%d.bmp";
 
 static SDL_Surface *screen = NULL;
 static int cur = 0;
+static int N = 0;
+
+// 自动检测 slide 文件数量
+static int count_slides() {
+  int n = 0;
+  char fname[256];
+  while (1) {
+    sprintf(fname, path, n);
+    int fd = open(fname, 0, 0);
+    if (fd < 0) break;
+    close(fd);
+    n++;
+  }
+  return n;
+}
 
 void render() {
   char fname[256];
@@ -46,6 +61,9 @@ void next(int rep) {
 int main() {
   SDL_Init(0);
   screen = SDL_SetVideoMode(W, H, 32, SDL_HWSURFACE);
+
+  N = count_slides();
+  assert(N > 0);
 
   int rep = 0, g = 0;
 

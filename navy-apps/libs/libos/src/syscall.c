@@ -212,7 +212,7 @@ int _execve(const char *fname, char *const argv[], char *const envp[])
 // 以下函数在 Nanos-lite 中未使用，但为通过链接而定义
 
 int _fstat(int fd, struct stat *buf) {
-  return -1;
+  return _syscall_(SYS_fstat, fd, (intptr_t)buf, 0);
 }
 
 int _stat(const char *fname, struct stat *buf) {

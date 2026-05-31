@@ -1,11 +1,12 @@
 #include <sdl-file.h>
+#include <assert.h>
 
 SDL_RWops* SDL_RWFromFile(const char *filename, const char *mode) {
-  panic("Not implement");
+  assert(!"SDL_RWFromFile not implemented");
   return NULL;
 }
 
 SDL_RWops* SDL_RWFromMem(void *mem, int size) {
-  panic("Not implement");
+  assert(!"SDL_RWFromMem not implemented");
   return NULL;
 }

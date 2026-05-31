@@ -34,15 +34,9 @@ extern char **environ;
 
 void call_main(uintptr_t *args) {
   int argc = (int)args[0];
-  char * argv = (char *)(args + sizeof(int));
-  char * envp = (char *)(argc + argv + 1);
+  char **argv = (char **)(args + 1);
+  char **envp = &argv[argc + 1];
   environ = envp;
-  
-  // 调用用户程序的 main 函数
-  //   argc = 0 (没有命令行参数)
-  //   argv = empty (空参数列表)
-  //   envp = empty (空环境变量)
-  // main 函数返回后，用返回值调用 exit
   exit(main(argc, argv, envp));
   assert(0);
 }

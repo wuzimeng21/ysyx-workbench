@@ -11,9 +11,11 @@ void do_syscall(Context *c) {
   a[2] = c->GPR3;
   a[3] = c->GPR4;
 
+  // Log("syscall ID = %d", a[0]);
+
   switch (a[0]) {
   case SYS_exit:
-    halt(a[1]);
+    naive_uload(NULL, "/bin/menu", NULL, NULL);
     break;
   case SYS_yield:
     yield();
@@ -44,7 +46,7 @@ void do_syscall(Context *c) {
     c->GPRx = mm_brk(a[1]);
     break;
   case SYS_fstat:
-    c->GPRx = -1;
+    c->GPRx = fs_fstat(a[1], (void *)a[2]);
     break;
   case SYS_time:
     c->GPRx = 0;
@@ -52,9 +54,13 @@ void do_syscall(Context *c) {
   case SYS_signal:
     c->GPRx = -1;
     break;
-  case SYS_execve:
-    naive_uload(NULL, (const char *)a[1]);
+  case SYS_execve: {
+    int fd = fs_open((const char *)a[1], 0, 0);
+    if (fd < 0) { c->GPRx = -1; break; }
+    fs_close(fd);
+    naive_uload(NULL, (const char *)a[1], (char **)a[2], (char **)a[3]);
     break;
+  }
   case SYS_fork:
     c->GPRx = -1;
     break;

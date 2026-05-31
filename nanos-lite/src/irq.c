@@ -9,7 +9,7 @@ static Context* do_event(Event e, Context* c) {
       Log("HAS_CTE->init_irq->do_event: EVENT_YIELD...");
       break;
     case EVENT_SYSCALL:
-      Log("HAS_CTE->init_irq->do_event: EVENT_SYSCALL...");
+      // Log("HAS_CTE->init_irq->do_event: EVENT_SYSCALL...");
       do_syscall(c);
       break;
     default: panic("Unhandled event ID = %d", e.event);

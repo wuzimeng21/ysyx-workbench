@@ -53,19 +53,76 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
 void context_uload(PCB *pcb, const char *filename, char *const argv[],
                    char *const envp[]) {
   uintptr_t entry = loader(pcb, filename);
-  Area kstack = (Area){pcb, pcb + 1};
+  Area kstack = (Area){&pcb->stack[0], &pcb->stack[sizeof(pcb->stack)]};
   pcb->cp = kcontext(kstack, (void (*)(void *))entry, NULL);
   pcb->cp->GPRx = 0;
 }
 
-void naive_uload(PCB *pcb, const char *filename) {
-  uintptr_t entry = loader(pcb, filename);
-  Log("Jump to entry = %p, filename = %s", entry, filename);
+void naive_uload(PCB *pcb, const char *filename, char *const argv[],
+                 char *const envp[]) {
+  // Copy filename + argv/envp strings to kernel buffer BEFORE loader(),
+  // because loader() writes ELF segments that may overwrite user memory
+  // where these strings live.
 
-  // CRT0 expects a0 to point to args: [argc][padding 3 words][argv][envp]
-  static uintptr_t args[] = {0, 0, 0, 0, 0, 0, 0, 0};
+  int argc = 0;
+  if (argv) { while (argv[argc]) argc++; }
+  int envc = 0;
+  if (envp) { while (envp[envc]) envc++; }
 
-  // Jump to user entry with a0 = args pointer
+  // Calculate total string bytes needed (including filename)
+  int str_bytes = strlen(filename) + 1;
+  for (int i = 0; i < argc; i++) str_bytes += strlen(argv[i]) + 1;
+  for (int i = 0; i < envc; i++) str_bytes += strlen(envp[i]) + 1;
+
+  // Layout (high to low address):
+  //   [argc, argv_ptrs..., NULL, envp_ptrs..., NULL, str_data...]
+  int nr_args = 1 + argc + 1 + envc + 1;
+  size_t meta_size = nr_args * sizeof(uintptr_t);
+  static uint8_t user_stack[8192] __attribute__((aligned(16)));
+
+  uintptr_t *args =
+      (uintptr_t *)(user_stack + sizeof(user_stack) - meta_size);
+  char *str_area = (char *)args - str_bytes;
+  // Make sure we don't overflow the buffer
+  assert((uintptr_t)str_area >= (uintptr_t)user_stack);
+
+  // Copy string data into kernel buffer
+  char *sp = str_area;
+  size_t len;
+
+  len = strlen(filename) + 1; memcpy(sp, filename, len);
+  char *kfile = sp; sp += len;
+
+  for (int i = 0; i < argc; i++) {
+    len = strlen(argv[i]) + 1;
+    memcpy(sp, argv[i], len);
+    sp += len;
+  }
+  for (int i = 0; i < envc; i++) {
+    len = strlen(envp[i]) + 1;
+    memcpy(sp, envp[i], len);
+    sp += len;
+  }
+
+  // Now safe to load ELF (may overwrite user memory)
+  uintptr_t entry = loader(pcb, kfile);
+  Log("Jump to entry = %x, filename = %s", entry, kfile);
+
+  // Fill in args array with pointers to copied strings
+  int idx = 0;
+  args[idx++] = argc;
+  sp = str_area + strlen(kfile) + 1;  // skip filename
+  for (int i = 0; i < argc; i++) {
+    args[idx++] = (uintptr_t)sp;
+    sp += strlen(sp) + 1;
+  }
+  args[idx++] = 0;
+  for (int i = 0; i < envc; i++) {
+    args[idx++] = (uintptr_t)sp;
+    sp += strlen(sp) + 1;
+  }
+  args[idx++] = 0;
+
   asm volatile(
     "mv a0, %0\n\t"
     "jr %1"

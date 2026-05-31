@@ -48,6 +48,7 @@ int fs_open(const char *pathname, int flags, int mode) {
   int ft_sz = sizeof(file_table) / sizeof(file_table[0]);
   for (int i = 0; i < ft_sz; i++) {
     if (strcmp(pathname, file_table[i].name) == 0) {
+      file_table[i].open_offset = 0;  // 重置文件偏移
       return i;
     }
   }
@@ -98,5 +99,15 @@ size_t fs_lseek(int fd, size_t offset, int whence) {
 }
 
 int fs_close(int fd) {
+  return 0;
+}
+
+int fs_fstat(int fd, void *buf) {
+  int ft_sz = sizeof(file_table) / sizeof(file_table[0]);
+  if (fd < 0 || fd >= ft_sz) return -1;
+  memset(buf, 0, 64);
+  *(uint32_t *)((char *)buf + 4) = 0x8000; // st_mode = S_IFREG
+  *(uint32_t *)((char *)buf + 16) = file_table[fd].size; // st_size
+  Log("fs_fstat: fd=%d name=%s size=%d", fd, file_table[fd].name, file_table[fd].size);
   return 0;
 }
