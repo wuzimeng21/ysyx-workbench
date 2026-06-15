@@ -53,9 +53,34 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
 void context_uload(PCB *pcb, const char *filename, char *const argv[],
                    char *const envp[]) {
   uintptr_t entry = loader(pcb, filename);
-  Area kstack = (Area){&pcb->stack[0], &pcb->stack[sizeof(pcb->stack)]};
-  pcb->cp = kcontext(kstack, (void (*)(void *))entry, NULL);
-  pcb->cp->GPRx = 0;
+
+  // Count argc and envc
+  int argc = 0;
+  if (argv) { while (argv[argc]) argc++; }
+  int envc = 0;
+  if (envp) { while (envp[envc]) envc++; }
+
+  // Build user stack with argc/argv/envp (same layout as naive_uload)
+  // Layout: [argc, argv_ptrs..., NULL, envp_ptrs..., NULL, str_data...]
+  int nr_args = 1 + argc + 1 + envc + 1;
+  uintptr_t *user_sp =
+      (uintptr_t *)(&pcb->stack[sizeof(pcb->stack)] - nr_args * sizeof(uintptr_t));
+
+  int idx = 0;
+  user_sp[idx++] = argc;
+  for (int i = 0; i < argc; i++) user_sp[idx++] = (uintptr_t)argv[i];
+  user_sp[idx++] = 0;
+  for (int i = 0; i < envc; i++) user_sp[idx++] = (uintptr_t)envp[i];
+  user_sp[idx++] = 0;
+
+  // Initialize the address space
+  pcb->as.pgsize = PGSIZE;
+  pcb->as.area = (Area){&pcb->stack[0], &pcb->stack[sizeof(pcb->stack)]};
+  pcb->as.ptr = NULL;  // No hardware page table in NEMU
+
+  Context *c = ucontext(&pcb->as, pcb->as.area, (void *)(uintptr_t)entry);
+  c->GPRx = (uintptr_t)user_sp;  // a0 = pointer to argc/argv/envp on user stack
+  pcb->cp = c;
 }
 
 void naive_uload(PCB *pcb, const char *filename, char *const argv[],

@@ -29,8 +29,58 @@ enum {
 
 static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
+static int audio_initialized = 0;
+static volatile int sbuf_rd = 0;
+static volatile int sbuf_wr = 0;
+#define BUF_MASK (CONFIG_SB_SIZE - 1)
+
+static void audio_callback(void *userdata, uint8_t *stream, int len) {
+  for (int i = 0; i < len; i++) {
+    if (sbuf_rd != sbuf_wr) {
+      stream[i] = sbuf[sbuf_rd];
+      sbuf_rd = (sbuf_rd + 1) & BUF_MASK;
+    } else {
+      stream[i] = 0;  // silence
+    }
+  }
+}
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {
+  if (!is_write) return;
+
+  switch (offset) {
+    case reg_init * 4: {
+      if (audio_base[reg_init] && !audio_initialized) {
+        SDL_AudioSpec spec = {};
+        spec.freq = audio_base[reg_freq];
+        spec.format = AUDIO_S16SYS;
+        spec.channels = audio_base[reg_channels];
+        spec.samples = audio_base[reg_samples];
+        spec.callback = audio_callback;
+        spec.userdata = NULL;
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) {
+          SDL_OpenAudio(&spec, NULL);
+          SDL_PauseAudio(0);
+          audio_initialized = 1;
+          sbuf_rd = sbuf_wr = 0;
+        }
+      }
+      break;
+    }
+    case reg_sbuf_size * 4:
+      // Reset buffer pointers
+      sbuf_rd = sbuf_wr = 0;
+      break;
+    case reg_count * 4: {
+      // Guest wrote data to sbuf starting at sbuf_wr position
+      int count = audio_base[reg_count];
+      if (count > 0 && count <= CONFIG_SB_SIZE) {
+        sbuf_wr = (sbuf_wr + count) & BUF_MASK;
+      }
+      break;
+    }
+    default: break;
+  }
 }
 
 void init_audio() {
@@ -44,4 +94,7 @@ void init_audio() {
 
   sbuf = (uint8_t *)new_space(CONFIG_SB_SIZE);
   add_mmio_map("audio-sbuf", CONFIG_SB_ADDR, sbuf, CONFIG_SB_SIZE, NULL);
+
+  audio_initialized = 0;
+  sbuf_rd = sbuf_wr = 0;
 }

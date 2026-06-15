@@ -10,6 +10,8 @@ void switch_boot_pcb() {
   current = &pcb_boot;
 }
 
+void context_kload(PCB *p, void (*entry)(void *), void *arg);
+
 void hello_fun(void *arg) {
   int j = 1;
   while (1) {
@@ -24,9 +26,14 @@ void init_proc() {
 
   Log("Initializing processes...");
 
-  // load program here
-  naive_uload(NULL, "/bin/menu", NULL, NULL);
+  // PA4.2: Create multiple processes
+  context_kload(&pcb[0], hello_fun, (void *)0);
+  context_uload(&pcb[1], "/bin/menu", NULL, NULL);
 
+  Log("Processes initialized. Enabling interrupts...");
+  iset(true);  // Enable machine timer interrupts for preemptive scheduling
+  yield();
+  panic("init_proc: should not reach here");
 }
 
 // struct Context {
@@ -43,11 +50,11 @@ void init_proc() {
 
 Context *schedule(Context *prev)
 {
-    static int schedule_table[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                   1, 1, 1, 1, 1, 1, 1, 1, 1, 0};
+    static int schedule_table[] = {1, 0};  // alternate: menu ↔ hello_fun
     static int ptr = 0;
     current->cp = prev;
-    PCB *switch_to = &pcb[schedule_table[ptr]];
+    int idx = schedule_table[ptr];
+    PCB *switch_to = &pcb[idx];
     ptr = (ptr + 1) % (sizeof(schedule_table) / sizeof(int));
     if (switch_to->cp == NULL) {
         return prev;
@@ -68,7 +75,8 @@ Context *schedule(Context *prev)
 // Context *kcontext(Area kstack, void (*entry)(void *), void *arg) 
 
 void context_kload(PCB *p, void (*entry)(void *), void *arg) {
-  Context *c = kcontext((Area){p, p + 1}, entry, arg);
+  Area kstack = (Area){&p->stack[0], &p->stack[sizeof(p->stack)]};
+  Context *c = kcontext(kstack, entry, arg);
   p->cp = c;
 }
 

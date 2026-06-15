@@ -59,6 +59,7 @@ __am_asm_trap:
 
   mv a0, sp // 将栈指针作为参数（即Context*）
   call __am_irq_handle // 调用C函数处理异常
+  mv sp, a0  // 切换到新上下文（schedule 返回的 Context*）
 
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)

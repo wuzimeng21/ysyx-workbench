@@ -20,7 +20,8 @@ static void *pg_alloc(int n)
 #endif
 
 void free_page(void *p) {
-  panic("not implement yet");
+  // Simple linear allocator: never free, just leak.
+  // In a real system this would return the page to the free list.
 }
 
 // /* The brk() system call handler. */

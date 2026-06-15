@@ -62,10 +62,9 @@ static void rtc_io_handler(uint32_t offset, int len, bool is_write) {
 }
 
 // ==================== 定时器中断处理 ====================
-#ifndef CONFIG_TARGET_AM  // native环境才需要中断
 /**
  * @brief 定时器中断处理函数
- * 
+ *
  * 被alarm机制周期性调用，触发设备中断
  */
 static void timer_intr() {
@@ -75,7 +74,6 @@ static void timer_intr() {
     dev_raise_intr();              // 向CPU发送中断
   }
 }
-#endif
 
 // ==================== 设备初始化 ====================
 /**
@@ -98,6 +96,6 @@ void init_timer() {
   add_mmio_map("rtc", CONFIG_RTC_MMIO, rtc_port_base, 8, rtc_io_handler);
 #endif
 
-  // ----- 3. native环境注册定时器中断 -----
-  IFNDEF(CONFIG_TARGET_AM, add_alarm_handle(timer_intr));
+  // ----- 3. 注册定时器中断 -----
+  add_alarm_handle(timer_intr);
 }

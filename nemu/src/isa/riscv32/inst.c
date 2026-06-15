@@ -73,6 +73,7 @@ static inline word_t csr_op(word_t addr, word_t val, bool write) {
     case 0xc82: // instreth
       return 0;
     case 0x300: case 0xf00: { word_t old = cpu.mstatus; if(write) cpu.mstatus = val; return old; }
+    case 0x304: { static word_t mie = 0; word_t old = mie; if(write) mie = val; return old; }
     case 0x305: { word_t old = cpu.mtvec; if(write) cpu.mtvec = val; return old; }
     case 0x341: { word_t old = cpu.mepc; if(write) cpu.mepc = val; return old; }
     case 0x342: { word_t old = cpu.mcause; if(write) cpu.mcause = val; return old; }

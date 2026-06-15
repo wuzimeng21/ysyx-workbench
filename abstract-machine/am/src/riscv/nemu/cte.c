@@ -22,33 +22,25 @@ Context* __am_irq_handle(Context *c) {
     // ----- 3. 根据异常原因（mcause）分发事件 -----
     switch (c->mcause) {
       // TODO: 需要根据不同的 mcause 值设置对应的事件类型
-      case 11:
-        if(c->GPR1 == -1){ 
+      case 8:   // ecall from U-mode
+      case 11:  // ecall from M-mode
+        if(c->GPR1 == -1){
           ev.event = EVENT_YIELD;
         }
         else{
-          ev.event = EVENT_SYSCALL; 
+          ev.event = EVENT_SYSCALL;
         }
         // pc + 4
         c->mepc += 4;
         break;
-      // case 8:
-      //   ev.event = EVENT_SYSCALL; 
-      //   break;
-      // case 9:
-      //   ev.event = EVENT_SYSCALL; 
-      //   break;
+      case 0x80000007:  // Machine timer interrupt
+        ev.event = EVENT_IRQ_TIMER;
+        break;
       case 12:
       case 13:
       case 15:
         ev.event = EVENT_PAGEFAULT;
         break;
-      // case 5:
-      //   ev.event = EVENT_IRQ_TIMER; 
-      //   break;
-      // case 6:
-      //   ev.event = EVENT_IRQ_IODEV; 
-      //   break;
       default: 
         // 设置为 EVENT_ERROR，表示发生了未知错误
         ev.event = EVENT_ERROR; 
@@ -95,18 +87,17 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   Context * c = (Context *)(kstack.end - sizeof(Context));
   c->mepc = (uintptr_t)entry;
-  c->mstatus = 0x1800;
+  c->mstatus = 0x1880;  // MPP=Machine, MPIE=1 (enable interrupts after mret)
   // set sp pointer
   c->gpr[2] = (uintptr_t)kstack.end;
   // keep arg
   c->gpr[10] = (uintptr_t)arg;
-  // AM_REG_SP();
   return c;
 }
 
 void yield() {
 #ifdef __riscv_e
-  asm volatile("li a5, -1; ecall"); 
+  asm volatile("li a5, -1; ecall");
 #else
   asm volatile("li a7, -1; ecall");// # 对于标准架构：将 -1 加载到 a7 (x17)
 #endif
@@ -117,4 +108,46 @@ bool ienabled() {
 }
 
 void iset(bool enable) {
+  if (enable) {
+    unsigned int val = 0;
+    // Set mstatus.MIE (bit 3)
+    asm volatile("csrrw %0, mstatus, %0" : "+r"(val));
+    asm volatile("csrrw x0, mstatus, %0" : : "r"(val | 0x8));
+    // Set mie.MTIE (bit 7)
+    asm volatile("csrrw %0, mie, %0" : "+r"(val));
+    asm volatile("csrrw x0, mie, %0" : : "r"(val | 0x80));
+  }
+}
+
+// ==================== VME: Virtual Memory ====================
+
+static void *(*__pgalloc)(int) = NULL;
+static void (*__pgfree)(void *) = NULL;
+
+bool vme_init(void *(*pgalloc)(int), void (*pgfree)(void *)) {
+  __pgalloc = pgalloc;
+  __pgfree = pgfree;
+  return true;
+}
+
+void protect(AddrSpace *as) {
+  // NEMU: no hardware MMU, address space activation is conceptual
+  // The page directory pointer in ucontext handles the actual switching
+}
+
+void unprotect(AddrSpace *as) {
+  // NEMU: no hardware MMU
+}
+
+void map(AddrSpace *as, void *vaddr, void *paddr, int prot) {
+  // NEMU: no hardware MMU, mappings are recorded for management purposes
+  // Physical memory is directly accessible, protection is handled by privilege mode
+}
+
+Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
+  Context *c = kcontext(kstack, entry, NULL);
+  c->pdir = as->ptr;
+  // Set MPP = User (00) with MPIE=1, so mret switches to user mode with interrupts enabled
+  c->mstatus = 0x0080;  // MPP=User, MPIE=1
+  return c;
 }

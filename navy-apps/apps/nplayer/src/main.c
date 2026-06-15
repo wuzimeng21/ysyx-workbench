@@ -8,8 +8,8 @@
 #include <fixedptc.h>
 
 #define MUSIC_PATH "/share/music/little-star.ogg"
-#define SAMPLES 4096
-#define FPS 10
+#define SAMPLES 8192
+#define FPS 20
 #define W 400
 #define H 100
 #define MAX_VOLUME 128

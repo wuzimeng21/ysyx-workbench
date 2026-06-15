@@ -25,7 +25,10 @@ size_t serial_write(const void *buf, size_t offset, size_t len) {
 
 size_t events_read(void *buf, size_t offset, size_t len) {
   AM_INPUT_KEYBRD_T k = io_read(AM_INPUT_KEYBRD);
-  if (k.keycode == AM_KEY_NONE) return 0;
+  if (k.keycode == AM_KEY_NONE) {
+    MULTIPROGRAM_YIELD();
+    return 0;
+  }
   return snprintf(buf, len, "%s %s\n", k.keydown ? "kd" : "ku", keyname[k.keycode]);
 }
 
@@ -47,7 +50,24 @@ size_t fb_write(const void *buf, size_t offset, size_t len) {
   return len;
 }
 
+// ==================== Audio Device ====================
+size_t audio_write(const void *buf, size_t offset, size_t len) {
+  MULTIPROGRAM_YIELD();
+  Area area;
+  area.start = (void *)buf;
+  area.end = (void *)((uint8_t *)buf + len);
+  io_write(AM_AUDIO_PLAY, area);
+  return len;
+}
+
+size_t audio_read(void *buf, size_t offset, size_t len) {
+  AM_AUDIO_STATUS_T status = io_read(AM_AUDIO_STATUS);
+  return snprintf(buf, len, "%d", status.count);
+}
+
 void init_device() {
   Log("Initializing devices...");
   ioe_init();
+  // Initialize audio device with default parameters
+  io_write(AM_AUDIO_CTRL, 44100, 1, 512);
 }

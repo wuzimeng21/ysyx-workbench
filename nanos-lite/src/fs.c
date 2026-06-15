@@ -12,7 +12,7 @@ typedef struct {
   WriteFn write;
 } Finfo;
 
-enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB, FD_EVENTS, FD_DISPINFO};
+enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB, FD_EVENTS, FD_DISPINFO, FD_AUDIO};
 
 size_t invalid_read(void *buf, size_t offset, size_t len) {
   panic("should not reach here");
@@ -28,6 +28,8 @@ size_t serial_write(const void *buf, size_t offset, size_t len);
 size_t events_read(void *buf, size_t offset, size_t len);
 size_t dispinfo_read(void *buf, size_t offset, size_t len);
 size_t fb_write(const void *buf, size_t offset, size_t len);
+size_t audio_write(const void *buf, size_t offset, size_t len);
+size_t audio_read(void *buf, size_t offset, size_t len);
 
 static Finfo file_table[] __attribute__((used)) = {
   [FD_STDIN]   = {"stdin", 0, 0, 0, invalid_read, invalid_write},
@@ -36,6 +38,7 @@ static Finfo file_table[] __attribute__((used)) = {
   [FD_FB]      = {"/dev/fb", 0, 0, 0, invalid_read, fb_write},
   [FD_EVENTS]  = {"/dev/events", 0, 0, 0, events_read, invalid_write},
   [FD_DISPINFO] = {"/proc/dispinfo", 0, 0, 0, dispinfo_read, invalid_write},
+  [FD_AUDIO]   = {"/dev/audio", 0, 0, 0, audio_read, audio_write},
 #include "files.h"
 };
 

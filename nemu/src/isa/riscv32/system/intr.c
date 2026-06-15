@@ -16,22 +16,38 @@
 #include <isa.h>
 #include <etrace.h>
 
+static volatile int timer_intr_pending = 0;
+
+void set_timer_intr() {
+  timer_intr_pending = 1;
+}
+
+word_t isa_query_intr() {
+  if (timer_intr_pending && (cpu.mstatus & 0x8)) {  // MIE must be set
+    timer_intr_pending = 0;  // consume the interrupt
+    return 0x80000007;
+  }
+  return INTR_EMPTY;
+}
+
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   /* Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
+  // For interrupts (bit 31 set), check MIE (bit 3 in mstatus)
+  if (NO & 0x80000000) {
+    if (!(cpu.mstatus & 0x8)) {
+      return epc;  // interrupts disabled, continue
+    }
+    timer_intr_pending = 0;
+  }
+
   cpu.mcause = NO;
   cpu.mepc = epc;
 
-  cpu.mstatus &= ~(1 << 7);
-  cpu.mstatus |= (cpu.mstatus >> 3 & 1) << 7;
-  cpu.mstatus &= ~(1 << 3);
-
-  // etrace_log(NO, epc, cpu.mtvec);
+  cpu.mstatus &= ~(1 << 7);   // clear MPIE
+  cpu.mstatus |= (cpu.mstatus >> 3 & 1) << 7;  // save MIE → MPIE
+  cpu.mstatus &= ~(1 << 3);   // clear MIE (disable interrupts in handler)
 
   return cpu.mtvec;
-}
-
-word_t isa_query_intr() {
-  return INTR_EMPTY;
 }

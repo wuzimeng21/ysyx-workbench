@@ -15,5 +15,10 @@
 
 #include <isa.h>
 
+extern void set_timer_intr();
+
 void dev_raise_intr() {
+  // Set timer interrupt pending flag
+  // The actual interrupt injection happens in isa_query_intr()
+  set_timer_intr();
 }

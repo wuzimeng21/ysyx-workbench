@@ -190,29 +190,45 @@ SDL_Surface* SDL_SetVideoMode(int width, int height, int bpp, uint32_t flags) {
 }
 
 void SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect) {
-  assert(src && dst);
+  assert(src && dst && dstrect);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
-  assert(dst->format->BitsPerPixel == 8);
 
-  int x = (srcrect == NULL ? 0 : srcrect->x);
-  int y = (srcrect == NULL ? 0 : srcrect->y);
-  int w = (srcrect == NULL ? src->w : srcrect->w);
-  int h = (srcrect == NULL ? src->h : srcrect->h);
+  int sx = (srcrect == NULL ? 0 : srcrect->x);
+  int sy = (srcrect == NULL ? 0 : srcrect->y);
+  int sw = (srcrect == NULL ? src->w : srcrect->w);
+  int sh = (srcrect == NULL ? src->h : srcrect->h);
+  int dx = dstrect->x, dy = dstrect->y;
+  int dw = dstrect->w, dh = dstrect->h;
 
-  assert(dstrect);
-  if(w == dstrect->w && h == dstrect->h) {
-    /* The source rectangle and the destination rectangle
-     * are of the same size. If that is the case, there
-     * is no need to stretch, just copy. */
-    SDL_Rect rect;
-    rect.x = x;
-    rect.y = y;
-    rect.w = w;
-    rect.h = h;
+  if (sw == dw && sh == dh) {
+    /* Same size: just copy */
+    SDL_Rect rect = { .x = sx, .y = sy, .w = sw, .h = sh };
     SDL_BlitSurface(src, &rect, dst, dstrect);
+    return;
   }
-  else {
-    assert(0);
+
+  /* Nearest-neighbor stretch */
+  int bpp = src->format->BitsPerPixel;
+  if (bpp == 32) {
+    uint32_t *sp = (uint32_t *)src->pixels;
+    uint32_t *dp = (uint32_t *)dst->pixels;
+    for (int dyi = 0; dyi < dh; dyi++) {
+      int syi = sy + dyi * sh / dh;
+      for (int dxi = 0; dxi < dw; dxi++) {
+        int sxi = sx + dxi * sw / dw;
+        dp[(dy + dyi) * dst->w + dx + dxi] = sp[syi * src->w + sxi];
+      }
+    }
+  } else if (bpp == 8) {
+    uint8_t *sp = (uint8_t *)src->pixels;
+    uint8_t *dp = (uint8_t *)dst->pixels;
+    for (int dyi = 0; dyi < dh; dyi++) {
+      int syi = sy + dyi * sh / dh;
+      for (int dxi = 0; dxi < dw; dxi++) {
+        int sxi = sx + dxi * sw / dw;
+        dp[(dy + dyi) * dst->w + dx + dxi] = sp[syi * src->w + sxi];
+      }
+    }
   }
 }
 

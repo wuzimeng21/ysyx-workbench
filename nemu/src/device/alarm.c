@@ -47,7 +47,7 @@ static int idx = 0;  // 当前已注册的回调数量
 void add_alarm_handle(alarm_handler_t h) {
   // 检查是否超过最大数量
   assert(idx < MAX_HANDLER);
-  
+
   // 存入数组，并更新计数
   handler[idx ++] = h;
 }
@@ -64,9 +64,8 @@ void add_alarm_handle(alarm_handler_t h) {
  */
 static void alarm_sig_handler(int signum) {
   int i;
-  // 依次调用所有注册的回调函数
   for (i = 0; i < idx; i ++) {
-    handler[i]();  // 执行回调
+    handler[i]();
   }
 }
 
@@ -85,23 +84,19 @@ void init_alarm() {
   // ----- 1. 设置信号处理函数 -----
   struct sigaction s;
   memset(&s, 0, sizeof(s));
-  s.sa_handler = alarm_sig_handler;  // 指定信号处理函数
-  
-  // 注册 SIGVTALRM 信号的处理
+  s.sa_handler = alarm_sig_handler;
+
   int ret = sigaction(SIGVTALRM, &s, NULL);
   Assert(ret == 0, "Can not set signal handler");
 
   // ----- 2. 配置周期性定时器 -----
   struct itimerval it = {};
-  
-  // 首次到期时间：立即开始，周期为 1000000 / TIMER_HZ 微秒
+
   it.it_value.tv_sec = 0;
   it.it_value.tv_usec = 1000000 / TIMER_HZ;
-  
-  // 后续间隔：与首次相同（周期性）
+
   it.it_interval = it.it_value;
-  
-  // 设置虚拟定时器（ITIMER_VIRTUAL：只在进程用户态运行时计时）
+
   ret = setitimer(ITIMER_VIRTUAL, &it, NULL);
   Assert(ret == 0, "Can not set timer");
 }

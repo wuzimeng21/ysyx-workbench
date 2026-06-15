@@ -82,16 +82,30 @@ void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
   }
 }
 
-void NDL_OpenAudio(int freq, int channels, int samples) {}
+static int audio_fd = -1;
 
-void NDL_CloseAudio() {}
+void NDL_OpenAudio(int freq, int channels, int samples) {
+  audio_fd = open("/dev/audio", 0, 0);
+}
+
+void NDL_CloseAudio() {
+  if (audio_fd >= 0) {
+    close(audio_fd);
+    audio_fd = -1;
+  }
+}
 
 int NDL_PlayAudio(void *buf, int len) {
-  return 0;
+  if (audio_fd < 0) return 0;
+  return write(audio_fd, buf, len);
 }
 
 int NDL_QueryAudio() {
-  return 0;
+  if (audio_fd < 0) return 0;
+  char buf[32];
+  int n = read(audio_fd, buf, sizeof(buf));
+  if (n <= 0) return 0;
+  return atoi(buf);
 }
 
 int NDL_Init(uint32_t flags) {
